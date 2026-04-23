@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>田園ラグビースクール フォトギャラリー</title>
+<style>
+  :root {
+    --bg: #f4f7fc;
+    --card-bg: #ffffff;
+    --text: #1a2547;
+    --text-sub: #5b6987;
+    --accent: #1a3a8a;        /* 群青色 */
+    --accent-dark: #0f2563;
+    --accent-light: #e8eef9;
+    --border: #dee5f0;
+    --shadow: 0 2px 8px rgba(26, 58, 138, 0.08);
+    --shadow-hover: 0 8px 24px rgba(26, 58, 138, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== ヘッダー ===== */
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .logo-img {
+    height: 44px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .search-box {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: #f4f4f4;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-box input:focus {
+    background: white;
+    border-color: var(--accent);
+  }
+  .search-box::before {
+    content: "🔍";
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    opacity: 0.5;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: #f0f0f0; }
+
+  /* ===== カテゴリフィルタ ===== */
+  .filters {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 24px 8px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    padding: 10px 20px;
+    border-radius: 24px;
+    background: white;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+  .filter-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .filter-pill.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .filter-pill .count {
+    margin-left: 6px;
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  /* ===== セクションタイトル ===== */
+  .section-title {
+    max-width: 1400px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .section-title h2 {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .section-title p {
+    color: var(--text-sub);
+    font-size: 13px;
+    margin-top: 4px;
+    width: 100%;
+  }
+  .breadcrumb {
+    color: var(--text-sub);
+    font-size: 13px;
+  }
+  .breadcrumb a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  /* ===== マソンリーグリッド ===== */
+  .masonry {
+    max-width: 1400px;
+    margin: 16px auto 60px;
+    padding: 16px 24px;
+    column-count: 5;
+    column-gap: 16px;
+  }
+  @media (max-width: 1200px) { .masonry { column-count: 4; } }
+  @media (max-width: 900px) { .masonry { column-count: 3; } }
+  @media (max-width: 640px) { .masonry { column-count: 2; } .header-inner { padding: 12px 16px; } .filters { padding: 16px; } }
+  @media (max-width: 400px) { .masonry { column-count: 1; } }
+
+  .card {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+  .card-img-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-img-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .card:hover .card-img-wrap img {
+    transform: scale(1.04);
+  }
+
+  /* 重なり感を出す疑似要素（複数枚あることを表現） */
+  .card.multi::before,
+  .card.multi::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    z-index: -1;
+    transition: all 0.25s;
+  }
+  .card.multi::before {
+    top: -4px; left: 4px; right: -4px; bottom: 4px;
+    transform: rotate(1.2deg);
+  }
+  .card.multi::after {
+    top: -8px; left: 8px; right: -8px; bottom: 8px;
+    transform: rotate(2.4deg);
+    opacity: 0.6;
+  }
+  .card.multi:hover::before { transform: rotate(0.6deg) translateY(-2px); }
+  .card.multi:hover::after { transform: rotate(1.2deg) translateY(-2px); }
+
+  .photo-count-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(4px);
+  }
+
+  .card-body {
+    padding: 12px 14px 14px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+  }
+  .tag-practice { background: #2e7d32; }
+  .tag-match { background: #1a3a8a; }
+  .tag-camp { background: #0288d1; }
+  .tag-event { background: #ef6c00; }
+  .tag-other { background: #5e35b1; }
+
+  /* ===== アルバム詳細ビュー ===== */
+  .album-view {
+    max-width: 1400px;
+    margin: 16px auto 60px;
+    padding: 0 24px;
+  }
+  .album-header {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .album-header h2 {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+  .album-header .meta {
+    color: var(--text-sub);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .album-grid {
+    column-count: 4;
+    column-gap: 12px;
+  }
+  @media (max-width: 1200px) { .album-grid { column-count: 3; } }
+  @media (max-width: 700px) { .album-grid { column-count: 2; } }
+
+  .album-photo {
+    break-inside: avoid;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .album-photo:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+  .album-photo img {
+    width: 100%;
+    display: block;
+  }
+
+  .add-photo-tile {
+    border: 2px dashed #ccc;
+    background: white;
+    border-radius: 12px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+    cursor: pointer;
+    margin-bottom: 12px;
+    break-inside: avoid;
+    transition: all 0.2s;
+  }
+  .add-photo-tile:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .add-photo-tile .icon {
+    font-size: 36px;
+    margin-bottom: 4px;
+  }
+
+  /* ===== ライトボックス ===== */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+    flex-direction: column;
+  }
+  .lightbox.active { display: flex; }
+
+  .lightbox-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    color: white;
+  }
+  .lightbox-info-top h3 {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  .lightbox-info-top p {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+  .lightbox-counter {
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: white;
+  }
+  .lightbox-close {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+
+  .lightbox-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 60px;
+    overflow: hidden;
+  }
+  .lightbox-stage img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.3); }
+  .nav-prev { left: 16px; }
+  .nav-next { right: 16px; }
+
+  .lightbox-thumbs {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    overflow-x: auto;
+    background: rgba(0,0,0,0.5);
+  }
+  .lightbox-thumbs::-webkit-scrollbar { height: 6px; }
+  .lightbox-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+  .thumb {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.15s;
+    border: 2px solid transparent;
+  }
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .thumb.active {
+    opacity: 1;
+    border-color: white;
+  }
+  .thumb:hover { opacity: 0.85; }
+
+  /* ===== フッター ===== */
+  footer {
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 24px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 13px;
+  }
+
+  /* ========================================================== */
+  /* ===== スマホ対応 ===== */
+  /* ========================================================== */
+  @media (max-width: 768px) {
+    /* ヘッダー */
+    .header-inner {
+      padding: 10px 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .logo {
+      font-size: 14px;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .logo span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .logo-img { height: 36px; }
+    .header-actions { gap: 4px; flex-shrink: 0; }
+    .header-actions .btn {
+      padding: 8px 10px;
+      font-size: 11px;
+      min-height: 36px;
+    }
+    .search-box {
+      order: 3;
+      max-width: 100%;
+      flex: 0 0 100%;
+    }
+    .search-box input { font-size: 16px; min-height: 40px; }
+
+    /* フィルタ */
+    .filters { padding: 16px 12px 8px; gap: 6px; }
+    .filter-pill { padding: 8px 14px; font-size: 13px; min-height: 36px; }
+
+    /* セクションタイトル */
+    .section-title { padding: 0 16px; }
+    .section-title h2 { font-size: 18px; }
+
+    /* マソンリー: 余白詰め */
+    .masonry { padding: 12px 8px 60px; column-gap: 8px; }
+    .card { margin-bottom: 8px; border-radius: 12px; }
+    .card-body { padding: 8px 10px 10px; }
+    .card-title { font-size: 13px; }
+    .card-meta { font-size: 11px; }
+    /* 重ね効果は控えめに */
+    .card.multi::before { top: -2px; left: 2px; right: -2px; bottom: 2px; }
+    .card.multi::after { display: none; }
+
+    /* アルバム詳細 */
+    .album-view { padding: 0 12px 60px; margin-top: 12px; }
+    .album-header { padding: 16px; gap: 12px; }
+    .album-header h2 { font-size: 18px; }
+    .album-header .meta { font-size: 12px; }
+    .album-grid { column-gap: 6px; }
+    .album-photo { margin-bottom: 6px; border-radius: 8px; }
+    .breadcrumb { padding-left: 4px; }
+
+    /* ライトボックス */
+    .lightbox { padding: 0; }
+    .lightbox-content { max-width: 100vw; max-height: 100vh; border-radius: 0; }
+    .lightbox img { max-width: 100vw; max-height: 60vh; }
+    .lightbox-info { padding: 12px 16px; }
+    .lightbox-info h3 { font-size: 14px; }
+    .lightbox-info p { font-size: 12px; }
+    .lightbox-close { width: 40px; height: 40px; top: 12px; right: 12px; }
+    .nav-btn { width: 44px; height: 44px; font-size: 22px; }
+    .nav-prev { left: 8px; }
+    .nav-next { right: 8px; }
+    .lightbox-thumbs { padding: 12px; }
+    .thumb { width: 64px; height: 48px; }
+
+    /* タッチ最適化 */
+    button, .btn { min-height: 36px; }
+    .icon-btn { width: 40px; height: 40px; }
+  }
+
+  @media (max-width: 480px) {
+    .header-actions .btn {
+      font-size: 0;
+      padding: 8px 12px;
+    }
+    .header-actions .btn:nth-child(1)::before { content: '📅'; font-size: 16px; }
+    .header-actions .btn:nth-child(2)::before { content: '＋ 追加'; font-size: 13px; }
+    .lightbox img { max-height: 55vh; }
+  }
+
+  /* ===== バッジ（新着など） ===== */
+  .badge-new {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    z-index: 2;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo" onclick="goHome()">
+      <img src="denen_rs_logo.svg" alt="田園ラグビースクール" class="logo-img">
+      <span>田園ラグビースクール</span>
+    </div>
+    <div class="search-box">
+      <input type="text" placeholder="活動・写真を検索（例：5月 練習試合）">
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost">📅 カレンダー</button>
+      <button class="btn btn-primary">＋ 活動を追加</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== トップ画面（アルバム一覧） ===== -->
+<div id="home-view">
+  <nav class="filters" id="filters">
+    <button class="filter-pill active" data-cat="all">すべて<span class="count" id="cnt-all">12</span></button>
+    <button class="filter-pill" data-cat="practice">通常練習<span class="count" id="cnt-practice">4</span></button>
+    <button class="filter-pill" data-cat="match">試合・大会<span class="count" id="cnt-match">3</span></button>
+    <button class="filter-pill" data-cat="camp">合宿・遠征<span class="count" id="cnt-camp">2</span></button>
+    <button class="filter-pill" data-cat="event">イベント・親睦会<span class="count" id="cnt-event">2</span></button>
+    <button class="filter-pill" data-cat="other">その他活動<span class="count" id="cnt-other">1</span></button>
+  </nav>
+
+  <div class="section-title">
+    <h2 id="home-title">2026年 春シーズンの活動アルバム</h2>
+    <p>アルバムをクリックすると、その活動の写真がすべて表示されます。</p>
+  </div>
+
+  <div class="masonry" id="grid"></div>
+</div>
+
+<!-- ===== アルバム詳細画面 ===== -->
+<div id="album-view" class="album-view hidden">
+  <div class="breadcrumb" style="margin-bottom: 12px;">
+    <a onclick="goHome()">← アルバム一覧へ戻る</a>
+  </div>
+  <div class="album-header">
+    <div>
+      <h2 id="album-title">アルバムタイトル</h2>
+      <div class="meta">
+        <span class="tag" id="album-tag">カテゴリ</span>
+        <span id="album-date">日付</span>
+        <span>📷 <span id="album-count">0</span>枚</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost">⤓ 全てDL</button>
+      <button class="btn btn-primary">＋ 写真追加</button>
+    </div>
+  </div>
+  <div class="album-grid" id="album-grid"></div>
+</div>
+
+<!-- ===== ライトボックス ===== -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-topbar">
+    <div class="lightbox-info-top">
+      <h3 id="lb-title"></h3>
+      <p id="lb-meta"></p>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="lightbox-counter" id="lb-counter">1 / 1</span>
+      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    </div>
+  </div>
+  <div class="lightbox-stage">
+    <button class="nav-btn nav-prev" onclick="navLightbox(-1)">‹</button>
+    <img id="lb-img" src="" alt="">
+    <button class="nav-btn nav-next" onclick="navLightbox(1)">›</button>
+  </div>
+  <div class="lightbox-thumbs" id="lb-thumbs"></div>
+</div>
+
+<footer>
+  © 2026 田園ラグビースクール フォトギャラリー（デモ）
+</footer>
+
+<script>
+// ========== サンプルデータ ==========
+// 各「活動アルバム」が複数枚の写真を持つ構造
+const albums = [
+  {
+    id: 'a01', cat: 'practice', title: '4月18日 土曜練習', date: '2026/04/18 土', isNew: true,
+    photos: [
+      { seed: 'p101', h: 360 }, { seed: 'p102', h: 280 }, { seed: 'p103', h: 320 },
+      { seed: 'p104', h: 240 }, { seed: 'p105', h: 300 }, { seed: 'p106', h: 380 },
+      { seed: 'p107', h: 260 }, { seed: 'p108', h: 340 }
+    ]
+  },
+  {
+    id: 'a02', cat: 'practice', title: '4月11日 土曜練習', date: '2026/04/11 土',
+    photos: [
+      { seed: 'p201', h: 320 }, { seed: 'p202', h: 280 }, { seed: 'p203', h: 360 },
+      { seed: 'p204', h: 240 }, { seed: 'p205', h: 300 }
+    ]
+  },
+  {
+    id: 'a03', cat: 'practice', title: '4月4日 新学期初練習', date: '2026/04/04 土',
+    photos: [
+      { seed: 'p301', h: 300 }, { seed: 'p302', h: 360 }, { seed: 'p303', h: 280 },
+      { seed: 'p304', h: 320 }
+    ]
+  },
+  {
+    id: 'a04', cat: 'practice', title: '3月28日 春合宿前最終調整', date: '2026/03/28 土',
+    photos: [
+      { seed: 'p401', h: 280 }, { seed: 'p402', h: 320 }, { seed: 'p403', h: 360 }
+    ]
+  },
+  {
+    id: 'a05', cat: 'match', title: '春季交流戦 vs 青葉ラグビースクール', date: '2026/04/19 日', isNew: true,
+    photos: [
+      { seed: 'm101', h: 380 }, { seed: 'm102', h: 320 }, { seed: 'm103', h: 300 },
+      { seed: 'm104', h: 360 }, { seed: 'm105', h: 280 }, { seed: 'm106', h: 340 },
+      { seed: 'm107', h: 320 }, { seed: 'm108', h: 300 }, { seed: 'm109', h: 380 },
+      { seed: 'm110', h: 260 }, { seed: 'm111', h: 340 }, { seed: 'm112', h: 300 }
+    ]
+  },
+  {
+    id: 'a06', cat: 'match', title: '関東予選 第2試合', date: '2026/04/12 日',
+    photos: [
+      { seed: 'm201', h: 320 }, { seed: 'm202', h: 360 }, { seed: 'm203', h: 280 },
+      { seed: 'm204', h: 340 }, { seed: 'm205', h: 300 }, { seed: 'm206', h: 380 }
+    ]
+  },
+  {
+    id: 'a07', cat: 'match', title: '春季大会 優勝！', date: '2026/04/05 日',
+    photos: [
+      { seed: 'm301', h: 360 }, { seed: 'm302', h: 320 }, { seed: 'm303', h: 380 },
+      { seed: 'm304', h: 280 }, { seed: 'm305', h: 340 }
+    ]
+  },
+  {
+    id: 'a08', cat: 'camp', title: '春合宿 河口湖 2泊3日', date: '2026/03/27〜29',
+    photos: [
+      { seed: 'c101', h: 320 }, { seed: 'c102', h: 360 }, { seed: 'c103', h: 280 },
+      { seed: 'c104', h: 340 }, { seed: 'c105', h: 300 }, { seed: 'c106', h: 380 },
+      { seed: 'c107', h: 260 }, { seed: 'c108', h: 320 }, { seed: 'c109', h: 360 },
+      { seed: 'c110', h: 280 }, { seed: 'c111', h: 340 }, { seed: 'c112', h: 300 },
+      { seed: 'c113', h: 360 }, { seed: 'c114', h: 280 }, { seed: 'c115', h: 320 }
+    ]
+  },
+  {
+    id: 'a09', cat: 'camp', title: '神奈川遠征', date: '2026/03/15 日',
+    photos: [
+      { seed: 'c201', h: 320 }, { seed: 'c202', h: 360 }, { seed: 'c203', h: 280 },
+      { seed: 'c204', h: 340 }, { seed: 'c205', h: 300 }, { seed: 'c206', h: 380 }
+    ]
+  },
+  {
+    id: 'a10', cat: 'event', title: 'BBQ大会 2026', date: '2026/04/20 月', isNew: true,
+    photos: [
+      { seed: 'e101', h: 320 }, { seed: 'e102', h: 360 }, { seed: 'e103', h: 280 },
+      { seed: 'e104', h: 340 }, { seed: 'e105', h: 300 }, { seed: 'e106', h: 380 },
+      { seed: 'e107', h: 260 }, { seed: 'e108', h: 320 }, { seed: 'e109', h: 360 },
+      { seed: 'e110', h: 280 }
+    ]
+  },
+  {
+    id: 'a11', cat: 'event', title: '卒団式 2026', date: '2026/03/31 火',
+    photos: [
+      { seed: 'e201', h: 360 }, { seed: 'e202', h: 320 }, { seed: 'e203', h: 280 },
+      { seed: 'e204', h: 340 }, { seed: 'e205', h: 380 }, { seed: 'e206', h: 300 },
+      { seed: 'e207', h: 320 }, { seed: 'e208', h: 360 }
+    ]
+  },
+  {
+    id: 'a12', cat: 'other', title: 'グラウンド清掃ボランティア', date: '2026/04/17 金',
+    photos: [
+      { seed: 'o101', h: 280 }, { seed: 'o102', h: 320 }, { seed: 'o103', h: 360 },
+      { seed: 'o104', h: 300 }
+    ]
+  }
+];
+
+const catLabels = {
+  practice: { label: '通常練習', cls: 'tag-practice' },
+  match: { label: '試合・大会', cls: 'tag-match' },
+  camp: { label: '合宿・遠征', cls: 'tag-camp' },
+  event: { label: 'イベント・親睦会', cls: 'tag-event' },
+  other: { label: 'その他活動', cls: 'tag-other' }
+};
+
+// 件数カウント
+function updateCounts() {
+  document.getElementById('cnt-all').textContent = albums.length;
+  Object.keys(catLabels).forEach(cat => {
+    const el = document.getElementById('cnt-' + cat);
+    if (el) el.textContent = albums.filter(a => a.cat === cat).length;
+  });
+}
+
+// ========== アルバムカード描画 ==========
+function renderAlbums(filter = 'all') {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const list = filter === 'all' ? albums : albums.filter(a => a.cat === filter);
+
+  list.forEach(album => {
+    const tag = catLabels[album.cat];
+    const cover = album.photos[0];
+    const coverSrc = `https://picsum.photos/seed/${cover.seed}/400/${cover.h}`;
+    const card = document.createElement('div');
+    card.className = 'card' + (album.photos.length > 1 ? ' multi' : '');
+    card.innerHTML = `
+      <div class="card-img-wrap">
+        ${album.isNew ? '<div class="badge-new">NEW</div>' : ''}
+        <img src="${coverSrc}" alt="${album.title}" loading="lazy">
+        ${album.photos.length > 1 ? `<div class="photo-count-badge">📷 ${album.photos.length}枚</div>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${album.title}</div>
+        <div class="card-meta">
+          <span class="tag ${tag.cls}">${tag.label}</span>
+          <span>${album.date}</span>
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', () => openAlbum(album.id));
+    grid.appendChild(card);
+  });
+}
+
+// ========== アルバム詳細画面 ==========
+let currentAlbum = null;
+
+function openAlbum(id) {
+  const album = albums.find(a => a.id === id);
+  if (!album) return;
+  currentAlbum = album;
+  const tag = catLabels[album.cat];
+
+  document.getElementById('album-title').textContent = album.title;
+  document.getElementById('album-tag').textContent = tag.label;
+  document.getElementById('album-tag').className = 'tag ' + tag.cls;
+  document.getElementById('album-date').textContent = album.date;
+  document.getElementById('album-count').textContent = album.photos.length;
+
+  const ag = document.getElementById('album-grid');
+  ag.innerHTML = '';
+  album.photos.forEach((photo, idx) => {
+    const src = `https://picsum.photos/seed/${photo.seed}/400/${photo.h}`;
+    const tile = document.createElement('div');
+    tile.className = 'album-photo';
+    tile.innerHTML = `<img src="${src}" alt="" loading="lazy">`;
+    tile.addEventListener('click', () => openLightbox(idx));
+    ag.appendChild(tile);
+  });
+  // 「写真追加」タイル
+  const addTile = document.createElement('div');
+  addTile.className = 'add-photo-tile';
+  addTile.innerHTML = `<div class="icon">＋</div><div>写真を追加</div>`;
+  ag.appendChild(addTile);
+
+  document.getElementById('home-view').classList.add('hidden');
+  document.getElementById('album-view').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goHome() {
+  document.getElementById('album-view').classList.add('hidden');
+  document.getElementById('home-view').classList.remove('hidden');
+  currentAlbum = null;
+}
+
+// ========== フィルタ ==========
+document.getElementById('filters').addEventListener('click', e => {
+  if (e.target.classList.contains('filter-pill') || e.target.parentElement.classList.contains('filter-pill')) {
+    const pill = e.target.classList.contains('filter-pill') ? e.target : e.target.parentElement;
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    pill.classList.add('active');
+    renderAlbums(pill.dataset.cat);
+    const titleEl = document.getElementById('home-title');
+    const cat = pill.dataset.cat;
+    titleEl.textContent = cat === 'all' ? '2026年 春シーズンの活動アルバム' : catLabels[cat].label + ' のアルバム';
+  }
+});
+
+// ========== ライトボックス ==========
+let lbIndex = 0;
+
+function openLightbox(idx) {
+  if (!currentAlbum) return;
+  lbIndex = idx;
+  renderLightbox();
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+function navLightbox(dir) {
+  if (!currentAlbum) return;
+  const total = currentAlbum.photos.length;
+  lbIndex = (lbIndex + dir + total) % total;
+  renderLightbox();
+}
+function renderLightbox() {
+  if (!currentAlbum) return;
+  const photo = currentAlbum.photos[lbIndex];
+  const tag = catLabels[currentAlbum.cat];
+  document.getElementById('lb-img').src = `https://picsum.photos/seed/${photo.seed}/1400/${photo.h * 3}`;
+  document.getElementById('lb-title').textContent = currentAlbum.title;
+  document.getElementById('lb-meta').textContent = `${tag.label} ・ ${currentAlbum.date}`;
+  document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${currentAlbum.photos.length}`;
+
+  // サムネイル
+  const thumbs = document.getElementById('lb-thumbs');
+  thumbs.innerHTML = '';
+  currentAlbum.photos.forEach((p, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb' + (i === lbIndex ? ' active' : '');
+    t.innerHTML = `<img src="https://picsum.photos/seed/${p.seed}/120/90" alt="">`;
+    t.addEventListener('click', () => { lbIndex = i; renderLightbox(); });
+    thumbs.appendChild(t);
+  });
+  // 選択中のサムネイルが見えるようにスクロール
+  const activeThumb = thumbs.querySelector('.thumb.active');
+  if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('active')) return;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowLeft') navLightbox(-1);
+  else if (e.key === 'ArrowRight') navLightbox(1);
+});
+
+// 初期描画
+updateCounts();
+renderAlbums();
+</script>
+
+</body>
+</html>

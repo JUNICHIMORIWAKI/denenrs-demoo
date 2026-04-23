@@ -1,0 +1,3800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>田園ラグビースクール 試合記録</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f7fc;
+    --card-bg: #ffffff;
+    --text: #1a2547;
+    --text-sub: #5b6987;
+    --accent: #1a3a8a;        /* 群青色 */
+    --accent-dark: #0f2563;
+    --accent-light: #e8eef9;
+    --win: #16a34a;
+    --lose: #dc2626;
+    --draw: #6b7280;
+    --border: #dee5f0;
+    --shadow: 0 1px 3px rgba(26,58,138,0.06), 0 1px 2px rgba(26,58,138,0.04);
+    --shadow-lg: 0 10px 25px rgba(26,58,138,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== ヘッダー ===== */
+  header {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .logo-img {
+    height: 48px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .logo-sub {
+    color: var(--text-sub);
+    font-weight: 500;
+    font-size: 14px;
+    margin-left: 4px;
+  }
+  .header-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  /* ===== コンテナ ===== */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .container.tight { padding-top: 8px; padding-bottom: 8px; }
+
+  /* ===== 年度タブ ===== */
+  .year-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    width: fit-content;
+    margin-bottom: 24px;
+  }
+  .year-tab {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-sub);
+    transition: all 0.15s;
+  }
+  .year-tab:hover { color: var(--text); }
+  .year-tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ===== サマリーカード ===== */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .summary { grid-template-columns: repeat(2, 1fr); } }
+  .summary-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .summary-card .label {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .summary-card .value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .summary-card .sub {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+  .wld-row { display: flex; align-items: baseline; gap: 4px; font-size: 24px; font-weight: 800; }
+  .w { color: var(--win); }
+  .l { color: var(--lose); }
+  .d { color: var(--draw); }
+  .sep { color: var(--text-sub); font-weight: 400; font-size: 18px; }
+
+  /* ===== チャート ===== */
+  .charts {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .chart-card h3 {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .chart-wrap { position: relative; height: 240px; }
+
+  /* ===== フィルタ ===== */
+  .filter-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-group .label-text {
+    font-size: 12px;
+    color: var(--text-sub);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+    transition: all 0.15s;
+  }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* ===== セクション見出し ===== */
+  .section-heading {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-heading .count-badge {
+    font-size: 12px;
+    color: var(--text-sub);
+    font-weight: 500;
+  }
+
+  /* ===== マッチタイムライン ===== */
+  .timeline {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .match-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 220px;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    gap: 16px;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row:hover { background: var(--accent-light); }
+  @media (max-width: 700px) {
+    .match-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+  .match-date {
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .match-info { min-width: 0; }
+  .match-vs {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .match-vs .home { color: var(--accent); }
+  .match-vs .vs-sep { color: var(--text-sub); margin: 0 6px; font-weight: 400; font-size: 13px; }
+  .match-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .small-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  /* 田園のチームタグ（U6/U8/U10/U12 ... ） */
+  .tag-team {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid #c7d3ec;
+  }
+  .tag-saved {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .tag-type-friendly { background: #f1f5f9; color: #475569; }
+  .tag-type-official { background: #ede9fe; color: #5b21b6; }
+  .tag-type-tournament { background: #fef3c7; color: #92400e; }
+  .match-score-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .score-result {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .score-w { background: var(--win); }
+  .score-l { background: var(--lose); }
+  .score-d { background: var(--draw); }
+  .score-numbers {
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-numbers .vs { color: var(--text-sub); margin: 0 6px; font-weight: 400; font-size: 13px; }
+  /* ===== 表 ===== */
+  .table-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th, .data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th {
+    background: var(--accent-light);
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .rank-medal {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-weight: 700;
+    font-size: 12px;
+    color: white;
+  }
+  .rank-1 { background: #f59e0b; }
+  .rank-2 { background: #94a3b8; }
+  .rank-3 { background: #b45309; }
+  .rank-other { background: #e5e7eb; color: var(--text-sub); }
+  .recent-form { display: flex; gap: 3px; }
+  .form-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 18px;
+  }
+
+  /* ===== 詳細モーダル ===== */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 37, 99, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.active { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .modal-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .modal-header h2 .home { color: var(--accent); }
+  .modal-header .modal-meta {
+    color: var(--text-sub);
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--accent-light);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--accent);
+  }
+  .modal-body { padding: 24px 28px; }
+  .modal-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 24px;
+    background: var(--accent-light);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .modal-score .team-name {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+  .modal-score .team-name strong { color: var(--accent); }
+  .modal-score .team-score {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .modal-score .team-side { text-align: center; flex: 1; }
+  .modal-score .vs-text { color: var(--text-sub); font-size: 14px; }
+  .result-banner {
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+  .result-banner.w { background: rgba(22, 163, 74, 0.1); color: var(--win); }
+  .result-banner.l { background: rgba(220, 38, 38, 0.1); color: var(--lose); }
+  .result-banner.d { background: rgba(107, 114, 128, 0.1); color: var(--draw); }
+
+  .modal-section { margin-top: 20px; }
+  .modal-section h4 {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .try-list {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .try-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+  .try-item:not(:last-child) { border-bottom: 1px solid #e5e7eb; }
+  .try-count { color: var(--accent); font-weight: 700; }
+  .comment-box {
+    background: #f9fafb;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  /* ===== ピリオド別スコア（カード型） ===== */
+  .period-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 560px) { .period-cards { grid-template-columns: 1fr; } }
+  .period-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: white;
+  }
+  .period-card.home {
+    border-color: var(--accent);
+  }
+  .period-card .pc-head {
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .period-card.home .pc-head {
+    background: var(--accent);
+    color: white;
+  }
+  .period-card.away .pc-head {
+    background: #f3f4f6;
+    color: var(--text);
+  }
+  .pc-head .pc-total-score {
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .pc-table th, .pc-table td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-table tr:last-child td { border-bottom: none; }
+  .pc-table th {
+    background: #fafbfc;
+    color: var(--text-sub);
+    font-size: 11px;
+    font-weight: 600;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .pc-table th.row-label, .pc-table td.row-label {
+    text-align: left;
+    color: var(--text-sub);
+    font-weight: 600;
+    width: 56px;
+    background: #fafbfc;
+  }
+  .pc-table td.row-label .stat-label {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    background: white;
+    color: var(--text-sub);
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    margin-right: 4px;
+  }
+  .pc-table tr.row-pts td {
+    background: var(--accent-light);
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .pc-table tr.row-pts td.row-label {
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+  .period-card.away .pc-table tr.row-pts td {
+    background: #f3f4f6;
+    color: var(--text);
+  }
+  .period-card.away .pc-table tr.row-pts td.row-label {
+    background: #f3f4f6;
+    color: var(--text);
+  }
+  .pc-table td.col-total {
+    background: rgba(26,58,138,0.04);
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .period-card.away .pc-table td.col-total {
+    background: rgba(0,0,0,0.04);
+    color: var(--text);
+  }
+  .pc-table tr.row-pts td.col-total {
+    background: var(--accent);
+    color: white;
+  }
+  .period-card.away .pc-table tr.row-pts td.col-total {
+    background: #4b5563;
+    color: white;
+  }
+  .format-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  /* ===== メンバー表 ===== */
+  .lineup-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .lineup-table th, .lineup-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .lineup-table th {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .lineup-table tr:last-child td { border-bottom: none; }
+  .lineup-table .col-no {
+    width: 40px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .lineup-table .col-pos {
+    width: 60px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pos-fw { color: #d97706; }
+  .pos-bk { color: #1d4ed8; }
+  .lineup-table .player-name { font-weight: 500; }
+  .lineup-table .reserve-row { background: #fafbfc; color: var(--text-sub); }
+  .lineup-section-divider {
+    background: #f3f4f6 !important;
+    color: var(--text-sub) !important;
+    text-align: center !important;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 6px !important;
+  }
+
+  /* ===== 交代記録 ===== */
+  .subs-list {
+    background: white;
+    border-radius: 8px;
+    padding: 4px 0;
+  }
+  .sub-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    font-size: 13px;
+  }
+  .sub-item:last-child { border-bottom: none; }
+  .sub-time {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 12px;
+    background: var(--accent-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .sub-content { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sub-out {
+    color: var(--lose);
+    text-decoration: line-through;
+  }
+  .sub-arrow { color: var(--text-sub); font-size: 16px; }
+  .sub-in {
+    color: var(--win);
+    font-weight: 700;
+  }
+  .sub-pos {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ===== タブ ===== */
+  .detail-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .detail-tab {
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .detail-tab:hover { color: var(--text); }
+  .detail-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* 2カラム下部 */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  /* ===== 入力フォームモーダル ===== */
+  .modal.modal-form {
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+  }
+  .form-tabs {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: white;
+    scrollbar-width: thin;
+  }
+  .form-tabs::-webkit-scrollbar { height: 4px; }
+  .form-tab {
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+  }
+  .form-tab:hover { color: var(--text); }
+  .form-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .form-tab .req-mark {
+    color: var(--lose);
+    margin-left: 2px;
+    font-size: 10px;
+  }
+  .form-pane { display: none; padding: 24px 28px; overflow-y: auto; }
+  .form-pane.active { display: block; }
+  .modal-form .modal-body { flex: 1; overflow: hidden; padding: 0; display: flex; flex-direction: column; }
+  .modal-form .form-pane { flex: 1; }
+  .modal-footer {
+    padding: 14px 28px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .modal-footer .footer-info {
+    color: var(--text-sub);
+    font-size: 12px;
+  }
+  .modal-footer .footer-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* フォームコントロール */
+  .form-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; gap: 4px; } }
+  .form-row label {
+    font-size: 13px;
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .form-row label .req {
+    color: var(--lose);
+    margin-left: 2px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.15s;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-light);
+  }
+  textarea.form-control { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  .radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .radio-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-sub);
+    background: white;
+    transition: all 0.15s;
+  }
+  .radio-group label:hover { border-color: var(--accent); color: var(--accent); }
+  .radio-group input[type="radio"] { display: none; }
+  .radio-group input[type="radio"]:checked + span { color: white; }
+  .radio-group label:has(input:checked) {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* スコア入力 */
+  .score-input-block {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    background: white;
+  }
+  .score-input-block .period-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .score-input-block .period-mins {
+    color: var(--text-sub);
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .score-input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 600px) { .score-input-row { grid-template-columns: 1fr; } }
+  .side-input {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fafbfc;
+  }
+  .side-input.home { border-color: var(--accent); background: var(--accent-light); }
+  .side-input .side-name {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .side-input.home .side-name { color: var(--accent); }
+  .stat-input-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr 60px;
+    gap: 4px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .stat-input-row .stat-key {
+    background: white;
+    border: 1px solid var(--border);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-sub);
+    font-size: 11px;
+  }
+  .stat-input-row input {
+    width: 100%;
+    padding: 4px 6px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-input-row input.score-final {
+    background: white;
+    font-weight: 800;
+    color: var(--text);
+    font-size: 15px;
+  }
+  .side-input.home .stat-input-row input.score-final { color: var(--accent); }
+
+  /* メンバー入力 */
+  .lineup-input-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .lineup-input-table th, .lineup-input-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .lineup-input-table th {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 11px;
+    text-align: left;
+  }
+  .lineup-input-table td.col-no {
+    width: 40px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .lineup-input-table td.col-pos {
+    width: 60px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .lineup-input-table input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .lineup-input-table input:focus { outline: 1px solid var(--accent); border-radius: 4px; }
+  .lineup-input-table .col-action {
+    width: 40px;
+    text-align: center;
+  }
+  .row-del-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-sub);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+  }
+  .row-del-btn:hover { color: var(--lose); }
+  .add-row-btn {
+    background: white;
+    border: 1px dashed var(--border);
+    color: var(--text-sub);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+
+  .template-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #fafbfc;
+    border-radius: 6px;
+    flex-wrap: wrap;
+  }
+  .template-bar select {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .template-bar button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .template-bar button:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* トライ入力 */
+  .try-input-row {
+    display: grid;
+    grid-template-columns: 1fr 32px 50px 32px 40px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f3f7;
+  }
+  .try-input-row:last-child { border-bottom: none; }
+  .try-input-row input[type="text"] {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .counter-btn {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .counter-btn:hover { background: var(--accent); color: white; }
+  .counter-display {
+    text-align: center;
+    font-weight: 800;
+    color: var(--accent);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 交代入力 */
+  .sub-input-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    position: relative;
+  }
+  .sub-input-card .sub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .sub-input-card .full {
+    grid-column: 1 / -1;
+  }
+  .sub-input-card label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+  .sub-input-card .row-del-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+
+  .form-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--accent);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 2000;
+    font-size: 14px;
+    font-weight: 600;
+    display: none;
+  }
+  .form-toast.show { display: block; animation: toast-in 0.3s ease; }
+  @keyframes toast-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .form-toast.error { background: var(--lose); }
+
+  /* ========================================================== */
+  /* ===== スマホ対応 ===== */
+  /* ========================================================== */
+  @media (max-width: 768px) {
+    /* ヘッダー圧縮 */
+    .header-inner {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .logo {
+      font-size: 14px;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .logo span:not(.logo-sub) {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .logo-img { height: 36px; }
+    .logo-sub { display: none; }
+    .header-actions {
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .header-actions .btn {
+      padding: 8px 10px;
+      font-size: 11px;
+      min-height: 36px;
+    }
+
+    /* コンテナ圧縮 */
+    .container { padding: 16px 12px; }
+    .container.tight { padding: 8px 12px; }
+
+    /* 年度タブ */
+    .year-tabs { width: 100%; overflow-x: auto; padding: 3px; }
+    .year-tab { padding: 8px 14px; font-size: 13px; flex-shrink: 0; }
+
+    /* サマリー: 2列 → 小さい画面では各カードのフォント縮小 */
+    .summary { gap: 8px; }
+    .summary-card { padding: 12px 14px; }
+    .summary-card .value { font-size: 22px; }
+    .summary-card .label { font-size: 11px; }
+    .summary-card .sub { font-size: 11px; }
+    .wld-row { font-size: 20px; }
+
+    /* チャート高さ */
+    .chart-wrap { height: 200px; }
+    .chart-card { padding: 14px; }
+
+    /* フィルタ */
+    .filter-row { gap: 12px; }
+    .filter-group { flex-wrap: wrap; }
+    .filter-pill { padding: 8px 14px; font-size: 13px; min-height: 36px; }
+
+    /* タイムライン: 既に縦積みだが余白調整 */
+    .match-row { padding: 12px 14px; gap: 8px; }
+    .match-vs { font-size: 14px; }
+
+    /* 予定セクション */
+    .scheduled-section .sched-head { padding: 10px 14px; font-size: 13px; }
+    .scheduled-row { padding: 12px 14px; grid-template-columns: 1fr; gap: 8px; }
+    .sched-record-btn { width: 100%; padding: 10px; min-height: 40px; }
+
+    /* テーブル: 横スクロール可能に */
+    .table-card { overflow-x: auto; }
+    .data-table { min-width: 100%; }
+    .data-table th, .data-table td { padding: 10px 12px; font-size: 12px; }
+
+    /* セクション見出し */
+    .section-heading { font-size: 15px; margin: 24px 0 10px; }
+
+    /* ===== モーダル: 全画面化 ===== */
+    .modal-backdrop { padding: 0; align-items: stretch; }
+    .modal,
+    .modal.modal-form {
+      max-width: 100% !important;
+      max-height: 100vh !important;
+      width: 100%;
+      height: 100vh;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 14px 16px 12px;
+      flex-shrink: 0;
+      padding-top: max(14px, env(safe-area-inset-top));
+    }
+    .modal-header h2 { font-size: 16px; padding-right: 80px; }
+    .modal-header .modal-meta { font-size: 12px; }
+    .modal-close { top: 12px; right: 12px; width: 36px; height: 36px; }
+    #m-edit-btn { top: 12px !important; right: 56px !important; padding: 6px 10px !important; }
+    .modal-body { padding: 16px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-section { margin-top: 14px; }
+    .modal-section h4 { font-size: 11px; }
+    .modal-score { padding: 18px; gap: 16px; }
+    .modal-score .team-score { font-size: 36px; }
+    .modal-score .team-name { font-size: 12px; }
+    .modal-score .vs-text { font-size: 12px; }
+
+    /* フォームモーダル */
+    .modal-form .modal-body { padding: 0; }
+    .form-pane { padding: 16px; }
+    .form-tabs {
+      padding: 0 8px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: white;
+    }
+    .form-tab { padding: 12px 10px; font-size: 12px; min-height: 44px; }
+    .modal-footer {
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      flex-shrink: 0;
+    }
+    .modal-footer .footer-info { display: none; }
+    .modal-footer .footer-actions { width: 100%; justify-content: space-between; }
+    .modal-footer .btn { flex: 1; min-height: 44px; padding: 10px; font-size: 14px; }
+
+    /* フォーム行: ラベル上、入力下 */
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+    .form-row label { font-size: 12px; }
+    .form-control { padding: 10px 12px; font-size: 16px; min-height: 42px; } /* iOS自動ズーム防止: 16px */
+    textarea.form-control { font-size: 14px; min-height: 100px; }
+    .radio-group { gap: 6px; }
+    .radio-group label { padding: 8px 14px; font-size: 13px; min-height: 38px; }
+
+    /* スコア入力: 2列維持＋タッチ拡大 */
+    .stat-input-row { grid-template-columns: 28px 1fr 28px 1fr 1fr; gap: 6px; }
+    .stat-input-row input { padding: 8px 4px; font-size: 16px; min-height: 38px; }
+    .score-input-block { padding: 12px; }
+
+    /* ピリオドカード */
+    .period-cards { grid-template-columns: 1fr; }
+    .pc-table th, .pc-table td { padding: 6px 8px; }
+
+    /* メンバー入力 */
+    .lineup-input-table input { padding: 10px 8px; font-size: 16px; min-height: 36px; }
+    .lineup-input-table th, .lineup-input-table td { padding: 4px 6px; font-size: 13px; }
+
+    /* トライ入力 */
+    .try-input-row { grid-template-columns: 1fr 32px 50px 32px 36px; gap: 4px; }
+    .try-input-row input[type="text"] { font-size: 16px; padding: 8px 10px; min-height: 38px; }
+    .counter-btn { width: 36px; height: 36px; font-size: 18px; }
+
+    /* 交代入力 */
+    .sub-input-card .sub-grid { grid-template-columns: 1fr; }
+    .sub-input-card .form-control { font-size: 16px; }
+
+    /* 写真サムネ */
+    .photo-thumbs { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .photo-thumb .photo-del { width: 28px; height: 28px; line-height: 28px; font-size: 14px; top: 2px; right: 2px; }
+    .photo-input-area { padding: 24px 16px; }
+    .photo-input-area .icon { font-size: 36px; }
+
+    /* 詳細モーダル写真ギャラリー */
+    .photo-gallery { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+
+    /* マスタ管理 */
+    .master-section { padding: 12px; }
+    .master-row { grid-template-columns: 1fr auto auto; padding: 10px 12px; }
+    .master-row input { font-size: 16px; padding: 6px 8px; }
+    .master-row .usage { font-size: 10px; }
+    .master-add-row input { font-size: 16px; min-height: 42px; }
+    .master-add-row button { min-height: 42px; padding: 10px 14px; }
+    .row-del-btn { width: 32px; height: 32px; font-size: 18px; }
+
+    /* テンプレートバー */
+    .template-bar { flex-direction: column; align-items: stretch; }
+    .template-bar select { font-size: 14px; min-height: 40px; }
+    .template-bar button { width: 100%; min-height: 40px; padding: 10px; font-size: 13px; }
+
+    /* ライトボックス */
+    .photo-lightbox .lb-nav { width: 44px; height: 44px; }
+    .photo-lightbox img { max-height: 70vh; }
+
+    /* トースト */
+    .form-toast { left: 16px; right: 16px; bottom: 16px; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    /* さらに小さい画面（iPhone SE等） */
+    .summary { grid-template-columns: 1fr 1fr; }
+    .header-inner .header-actions .btn:nth-child(2) {
+      /* CSV出力ボタンはアイコンのみに */
+      font-size: 0;
+      padding: 8px;
+    }
+    .header-inner .header-actions .btn:nth-child(2)::before {
+      content: '📥';
+      font-size: 14px;
+    }
+    .photo-thumbs { grid-template-columns: repeat(2, 1fr); }
+    .photo-gallery { grid-template-columns: repeat(2, 1fr); }
+    .stat-input-row { grid-template-columns: 28px 1fr 28px 1fr; }
+    .stat-input-row input.score-final {
+      grid-column: 1 / -1;
+      margin-top: 6px;
+    }
+  }
+
+  /* ===== 写真 ===== */
+  .photo-input-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: #fafbfc;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .photo-input-area:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .photo-input-area input[type="file"] { display: none; }
+  .photo-input-area .icon { font-size: 32px; margin-bottom: 4px; }
+  .photo-input-area .label { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .photo-input-area .hint { font-size: 12px; color: var(--text-sub); }
+  .photo-thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .photo-thumb {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #e5e7eb;
+    border: 1px solid var(--border);
+  }
+  .photo-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .photo-thumb .photo-del {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 22px;
+    padding: 0;
+  }
+  .photo-thumb .photo-del:hover { background: var(--lose); }
+  .photo-counter {
+    font-size: 12px;
+    color: var(--text-sub);
+    text-align: right;
+    margin-bottom: 8px;
+  }
+  .photo-counter.warn { color: var(--lose); }
+
+  /* 詳細モーダルでの写真ギャラリー */
+  .photo-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
+  }
+  .photo-gallery .gphoto {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #e5e7eb;
+    transition: transform 0.15s;
+  }
+  .photo-gallery .gphoto:hover { transform: scale(1.03); }
+  .photo-gallery .gphoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* 写真ライトボックス */
+  .photo-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.93);
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .photo-lightbox.active { display: flex; }
+  .photo-lightbox img {
+    max-width: 92vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .photo-lightbox .lb-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .photo-lightbox .lb-counter {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+  .photo-lightbox .lb-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 22px;
+  }
+  .photo-lightbox .lb-nav.prev { left: 16px; }
+  .photo-lightbox .lb-nav.next { right: 16px; }
+  .photo-lightbox .lb-nav:hover, .photo-lightbox .lb-close:hover { background: rgba(255,255,255,0.3); }
+
+  /* ===== 試合予定 ===== */
+  .scheduled-badge {
+    display: inline-block;
+    background: #f59e0b;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .scheduled-section {
+    background: linear-gradient(135deg, #fff7ed, #fef3c7);
+    border: 1px solid #fbbf24;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .scheduled-section .sched-head {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #92400e;
+    border-bottom: 1px solid #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .scheduled-row {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid #fde68a;
+    cursor: pointer;
+    gap: 12px;
+    background: rgba(255,255,255,0.6);
+    transition: background 0.1s;
+  }
+  .scheduled-row:hover { background: rgba(255,255,255,0.9); }
+  .scheduled-row:last-child { border-bottom: none; }
+  .scheduled-row .sched-date { font-size: 13px; color: #92400e; font-weight: 600; }
+  .scheduled-row .sched-info { font-size: 14px; font-weight: 700; }
+  .sched-record-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .sched-record-btn:hover { background: var(--accent-dark); }
+
+  /* ===== マスタ管理 ===== */
+  .master-section {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .master-section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .master-section .desc {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 12px;
+  }
+  .master-list {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    margin-bottom: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .master-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f3f7;
+  }
+  .master-row:last-child { border-bottom: none; }
+  .master-row input {
+    border: none;
+    background: transparent;
+    padding: 4px 6px;
+    font-size: 14px;
+    width: 100%;
+    font-family: inherit;
+  }
+  .master-row input:focus {
+    outline: 1px solid var(--accent);
+    border-radius: 4px;
+    background: white;
+  }
+  .master-row .usage {
+    font-size: 11px;
+    color: var(--text-sub);
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .master-row .usage.warn {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .master-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 13px;
+  }
+  .master-add-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .master-add-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .master-add-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .master-add-row button {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .master-add-row button:hover { background: var(--accent-dark); }
+
+  footer {
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 24px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 13px;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <img src="denen_rs_logo.svg" alt="田園ラグビースクール" class="logo-img">
+      <span>田園ラグビースクール</span>
+      <span class="logo-sub">／ 試合記録</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openMaster()">⚙️ マスタ管理</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">📥 CSV出力</button>
+      <button class="btn btn-primary" onclick="openForm()">＋ 試合を記録</button>
+    </div>
+  </div>
+</header>
+
+<div class="container tight">
+  <div class="year-tabs" id="year-tabs">
+    <button class="year-tab active" data-year="all">全期間</button>
+    <button class="year-tab" data-year="2024">2024年度</button>
+    <button class="year-tab" data-year="2025">2025年度</button>
+    <button class="year-tab" data-year="2026">2026年度</button>
+  </div>
+</div>
+
+<div class="container" style="padding-top: 0;">
+  <!-- サマリー -->
+  <div class="summary" id="summary"></div>
+
+  <!-- グラフ -->
+  <div class="charts">
+    <div class="chart-card">
+      <h3>得失点の推移（試合ごと）</h3>
+      <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>勝敗内訳</h3>
+      <div class="chart-wrap"><canvas id="chart-result"></canvas></div>
+    </div>
+  </div>
+
+  <!-- フィルタ -->
+  <div class="filter-row">
+    <div class="filter-group">
+      <span class="label-text">田園のチーム</span>
+      <div id="team-filter" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+    </div>
+    <div class="filter-group">
+      <span class="label-text">試合種別</span>
+      <div id="type-filter" style="display: flex; gap: 6px;">
+        <button class="filter-pill active" data-type="all">すべて</button>
+        <button class="filter-pill" data-type="friendly">交流戦</button>
+        <button class="filter-pill" data-type="official">公式戦</button>
+        <button class="filter-pill" data-type="tournament">大会</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 試合予定セクション（自動表示/非表示） -->
+  <div class="scheduled-section" id="scheduled-section" style="display:none;"></div>
+
+  <!-- タイムライン -->
+  <div class="section-heading">
+    試合一覧
+    <span class="count-badge" id="match-count">0 試合</span>
+  </div>
+  <div class="timeline" id="timeline"></div>
+
+  <!-- 下部グリッド：チーム別成績 + 対戦相手別 -->
+  <div class="bottom-grid" style="margin-top: 32px;">
+    <div>
+      <div class="section-heading">田園 チーム別 戦績</div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>チーム</th>
+              <th class="num">試合</th>
+              <th class="num">戦績</th>
+              <th class="num">勝率</th>
+              <th class="num">得失点</th>
+            </tr>
+          </thead>
+          <tbody id="team-table"></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section-heading">対戦相手別 戦績</div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>対戦相手</th>
+              <th class="num">対戦</th>
+              <th class="num">戦績</th>
+              <th>直近</th>
+            </tr>
+          </thead>
+          <tbody id="opponent-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- マスタ管理モーダル -->
+<div class="modal-backdrop" id="master-modal">
+  <div class="modal modal-form" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2>⚙️ マスタ管理</h2>
+      <div class="modal-meta" style="margin-top:4px;">チーム名・選手名を編集します。変更内容はブラウザに保存されます。</div>
+      <button class="modal-close" onclick="closeMaster()">✕</button>
+    </div>
+
+    <div class="form-tabs">
+      <button class="form-tab active" data-master-pane="master-teams" onclick="switchMasterTab('master-teams')">チーム</button>
+      <button class="form-tab" data-master-pane="master-players" onclick="switchMasterTab('master-players')">選手</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- チームマスタ -->
+      <div class="form-pane active" id="master-teams">
+        <div class="master-section">
+          <h3>
+            <span>🏉 田園のチーム一覧</span>
+            <span class="usage" id="teams-count"></span>
+          </h3>
+          <div class="desc">
+            年代別チームを設定します（例: U6 / U8 / U10 / U12-A / U12-B）。<br>
+            既存試合で使われているチーム名を変更しても、過去のデータは自動更新されません。
+          </div>
+          <div class="master-list" id="teams-list"></div>
+          <div class="master-add-row">
+            <input type="text" id="new-team-input" placeholder="新しいチーム名（例: U14）" onkeydown="if(event.key==='Enter') addTeam()">
+            <button onclick="addTeam()">＋ 追加</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 選手マスタ -->
+      <div class="form-pane" id="master-players">
+        <div class="master-section">
+          <h3>
+            <span>👥 選手一覧</span>
+            <span class="usage" id="players-count"></span>
+          </h3>
+          <div class="desc">
+            選手名を登録すると、メンバー入力・トライ・交代の入力欄でオートコンプリート候補に出ます。<br>
+            未登録の選手も入力欄に直接タイプすればその場で追加されます（自動登録）。
+          </div>
+          <div class="master-list" id="players-list"></div>
+          <div class="master-add-row">
+            <input type="text" id="new-player-input" placeholder="新しい選手名（例: 田中 太郎）" onkeydown="if(event.key==='Enter') addPlayer()">
+            <button onclick="addPlayer()">＋ 追加</button>
+          </div>
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button class="btn btn-ghost" onclick="importPlayersFromMatches()" style="font-size: 12px;">📥 既存試合から選手名を取込</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-info">変更は自動保存されます</div>
+      <div class="footer-actions">
+        <button class="btn btn-primary" onclick="closeMaster()">完了</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 試合入力フォームモーダル -->
+<div class="modal-backdrop" id="form-modal">
+  <div class="modal modal-form" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="form-title">＋ 新しい試合を記録</h2>
+      <div class="modal-meta" style="margin-top:4px;">タブを切り替えながら必要な項目を入力してください。スコア・メンバー・交代は後からでも追記できます。</div>
+      <button class="modal-close" onclick="closeForm()">✕</button>
+    </div>
+
+    <div class="form-tabs" id="form-tabs">
+      <button class="form-tab active" data-pane="form-info">試合情報<span class="req-mark">*</span></button>
+      <button class="form-tab" data-pane="form-score">スコア</button>
+      <button class="form-tab" data-pane="form-lineup">メンバー</button>
+      <button class="form-tab" data-pane="form-tries">トライ</button>
+      <button class="form-tab" data-pane="form-subs">交代</button>
+      <button class="form-tab" data-pane="form-photos">写真</button>
+      <button class="form-tab" data-pane="form-comment">コメント</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- 試合情報 -->
+      <div class="form-pane active" id="form-info">
+        <div class="form-row">
+          <label>記録ステータス<span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="f-status" value="completed" checked><span>✅ 結果を記録</span></label>
+            <label><input type="radio" name="f-status" value="scheduled"><span>📅 試合予定</span></label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>日付<span class="req">*</span></label>
+          <input type="date" id="f-date" class="form-control">
+        </div>
+        <div class="form-row">
+          <label>田園のチーム<span class="req">*</span></label>
+          <select id="f-our-team" class="form-control"></select>
+        </div>
+        <div class="form-row">
+          <label>対戦相手<span class="req">*</span></label>
+          <input type="text" id="f-opponent" class="form-control" placeholder="例: 青葉RS（記入式）">
+        </div>
+        <div class="form-row">
+          <label>相手のチーム</label>
+          <input type="text" id="f-opp-team" class="form-control" placeholder="例: U12（記入式・任意）">
+        </div>
+        <div class="form-row">
+          <label>場所</label>
+          <input type="text" id="f-location" class="form-control" list="dl-locations" placeholder="例: 田園グラウンド">
+          <datalist id="dl-locations"></datalist>
+        </div>
+        <div class="form-row">
+          <label>試合種別<span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="f-type" value="friendly" checked><span>交流戦</span></label>
+            <label><input type="radio" name="f-type" value="official"><span>公式戦</span></label>
+            <label><input type="radio" name="f-type" value="tournament"><span>大会</span></label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>試合名</label>
+          <input type="text" id="f-type-name" class="form-control" placeholder="例: 春季大会 1回戦">
+        </div>
+        <div class="form-row">
+          <label>試合形式<span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="f-format" value="halves" checked><span>前後半制</span></label>
+            <label><input type="radio" name="f-format" value="single"><span>1本勝負</span></label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>人数制<span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="f-squad" value="7" checked><span>7人制</span></label>
+            <label><input type="radio" name="f-squad" value="9"><span>9人制</span></label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>1ピリオド時間（分）</label>
+          <input type="number" id="f-minutes" class="form-control" value="15" min="1" max="60" style="max-width:120px;">
+        </div>
+      </div>
+
+      <!-- スコア -->
+      <div class="form-pane" id="form-score">
+        <div style="margin-bottom:12px; padding:10px 12px; background: var(--accent-light); border-radius:6px; font-size:12px; color:var(--accent);">
+          💡 T（トライ）とG（コンバージョン）を入力すると得点を自動計算（T×5 + G×2）。得点欄は手動でも上書きできます。
+        </div>
+        <div id="f-score-blocks"></div>
+        <div style="margin-top:12px; padding:14px 18px; background:white; border:1px solid var(--border); border-radius:8px; text-align:center;">
+          <div style="font-size:12px; color:var(--text-sub); margin-bottom:4px;">合計</div>
+          <div style="font-size:22px; font-weight:800; color:var(--text);">
+            <span style="color:var(--accent);" id="f-our-total">0</span>
+            <span style="margin:0 12px; color:var(--text-sub); font-weight:400;">−</span>
+            <span id="f-their-total">0</span>
+          </div>
+          <div id="f-result-text" style="margin-top:6px; font-size:13px; font-weight:700;"></div>
+        </div>
+      </div>
+
+      <!-- メンバー -->
+      <div class="form-pane" id="form-lineup">
+        <div class="template-bar">
+          <select id="f-template-select"><option value="">-- テンプレートを選択 --</option></select>
+          <button onclick="loadTemplate()">📥 読込</button>
+          <button onclick="saveAsTemplate()">💾 保存</button>
+          <button onclick="deleteTemplate()" style="color:var(--lose);">🗑 削除</button>
+        </div>
+        <h4 style="font-size:12px; color:var(--text-sub); margin:12px 0 8px;">⚪ スターティング</h4>
+        <table class="lineup-input-table">
+          <thead><tr><th class="col-no">#</th><th class="col-pos">ポジ</th><th>選手名</th></tr></thead>
+          <tbody id="f-starters"></tbody>
+        </table>
+        <h4 style="font-size:12px; color:var(--text-sub); margin:16px 0 8px;">🔁 リザーブ</h4>
+        <table class="lineup-input-table">
+          <thead><tr><th class="col-no">#</th><th>選手名</th><th class="col-action"></th></tr></thead>
+          <tbody id="f-reserves"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addReserve()">＋ リザーブ追加</button>
+        <datalist id="dl-players"></datalist>
+      </div>
+
+      <!-- トライ -->
+      <div class="form-pane" id="form-tries">
+        <div style="margin-bottom:12px; padding:10px 12px; background: var(--accent-light); border-radius:6px; font-size:12px; color:var(--accent);">
+          💡 選手名を入力して、＋ボタンでトライ数をカウントアップ。
+        </div>
+        <div id="f-tries-list"></div>
+        <button class="add-row-btn" onclick="addTryRow()">＋ 選手を追加</button>
+        <div style="margin-top:12px; padding:10px; background:white; border:1px solid var(--border); border-radius:6px; text-align:center; font-size:13px;">
+          合計 <strong id="f-tries-total" style="color:var(--accent); font-size:16px;">0</strong> トライ
+        </div>
+      </div>
+
+      <!-- 交代 -->
+      <div class="form-pane" id="form-subs">
+        <div id="f-subs-list"></div>
+        <button class="add-row-btn" onclick="addSubRow()">＋ 交代を追加</button>
+      </div>
+
+      <!-- 写真 -->
+      <div class="form-pane" id="form-photos">
+        <div style="margin-bottom:12px; padding:10px 12px; background: var(--accent-light); border-radius:6px; font-size:12px; color:var(--accent);">
+          💡 試合の写真を最大20枚まで添付できます。アップロード時に自動で圧縮されます。
+        </div>
+        <label class="photo-input-area" for="f-photo-input">
+          <div class="icon">📷</div>
+          <div class="label">クリックまたはドラッグで写真を追加</div>
+          <div class="hint">JPG / PNG / HEIC（自動で1280pxに縮小・JPEG変換）</div>
+          <input type="file" id="f-photo-input" accept="image/*" multiple>
+        </label>
+        <div class="photo-counter" id="f-photo-counter">0 / 20 枚</div>
+        <div class="photo-thumbs" id="f-photo-thumbs"></div>
+      </div>
+
+      <!-- コメント -->
+      <div class="form-pane" id="form-comment">
+        <div class="form-row" style="grid-template-columns:1fr;">
+          <label>試合の振り返り・コメント</label>
+          <textarea id="f-comment" class="form-control" rows="6" placeholder="例: 前半は守備が固く粘り強い試合運びだった..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-info" id="form-footer-info">入力中...</div>
+      <div class="footer-actions">
+        <button class="btn btn-ghost" onclick="closeForm()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveMatch()">💾 記録を保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 写真ライトボックス -->
+<div class="photo-lightbox" id="photo-lightbox">
+  <button class="lb-close" onclick="closePhotoLightbox()">✕</button>
+  <span class="lb-counter" id="lb-photo-counter">1 / 1</span>
+  <button class="lb-nav prev" onclick="navPhoto(-1)">‹</button>
+  <img id="lb-photo-img" src="" alt="">
+  <button class="lb-nav next" onclick="navPhoto(1)">›</button>
+</div>
+
+<div class="form-toast" id="form-toast"></div>
+
+<!-- 試合詳細モーダル -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><span class="home" id="m-home-team"></span> <span style="color:#5b6987; font-weight:400;">vs</span> <span id="m-opp-display"></span></h2>
+      <div class="modal-meta" id="m-meta"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="btn btn-ghost" id="m-edit-btn" style="position:absolute; top:16px; right:60px; padding:6px 14px; font-size:12px;">✏️ 編集</button>
+    </div>
+    <div class="modal-body">
+      <div class="result-banner" id="m-banner"></div>
+      <div class="modal-score">
+        <div class="team-side">
+          <div class="team-name"><strong>田園RS</strong> <span id="m-our-team-sub"></span></div>
+          <div class="team-score" id="m-our"></div>
+        </div>
+        <div class="vs-text">vs</div>
+        <div class="team-side">
+          <div class="team-name" id="m-opp-name"></div>
+          <div class="team-score" id="m-their"></div>
+        </div>
+      </div>
+
+      <!-- 詳細タブ -->
+      <div class="detail-tabs">
+        <button class="detail-tab active" data-pane="pane-overview">概要</button>
+        <button class="detail-tab" data-pane="pane-lineup">メンバー</button>
+        <button class="detail-tab" data-pane="pane-subs">交代</button>
+      </div>
+
+      <!-- 概要タブ -->
+      <div class="tab-pane active" id="pane-overview">
+        <div class="modal-section" id="m-period-section" style="display:none;">
+          <h4>⏱️ ピリオド別スコア <span class="format-badge" id="m-format-badge"></span></h4>
+          <div class="period-cards" id="m-periods"></div>
+        </div>
+        <div class="modal-section">
+          <h4>📍 場所</h4>
+          <div id="m-location" style="font-size: 14px;"></div>
+        </div>
+        <div class="modal-section">
+          <h4>🏆 トライ</h4>
+          <div class="try-list" id="m-tries"></div>
+        </div>
+        <div class="modal-section">
+          <h4>📝 試合コメント</h4>
+          <div class="comment-box" id="m-comment"></div>
+        </div>
+        <div class="modal-section" id="m-photos-section" style="display:none;">
+          <h4>📷 写真 <span style="font-weight:400; color:var(--text-sub); margin-left:4px;" id="m-photos-count"></span></h4>
+          <div class="photo-gallery" id="m-photos"></div>
+        </div>
+      </div>
+
+      <!-- メンバータブ -->
+      <div class="tab-pane" id="pane-lineup">
+        <div class="modal-section" style="margin-top:0;">
+          <h4>👥 出場メンバー <span class="format-badge" id="m-squad-badge"></span></h4>
+          <div id="m-lineup-wrap"></div>
+        </div>
+      </div>
+
+      <!-- 交代タブ -->
+      <div class="tab-pane" id="pane-subs">
+        <div class="modal-section" style="margin-top:0;">
+          <h4>🔄 交代記録</h4>
+          <div id="m-subs-wrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  © 2026 田園ラグビースクール 試合記録（デモ）
+</footer>
+
+<script>
+// ===== 田園ラグビースクールのチーム定義 =====
+// スクール内のチーム（年代別）。ourTeam フィールドの値として使用。
+// マスタ管理画面（⚙️ボタン）から編集可能。localStorageに保存される。
+let teams = ['U6', 'U8', 'U10', 'U12-A', 'U12-B'];
+
+// ===== 選手マスタ =====
+// マスタ管理画面から編集可能。試合入力時のオートコンプリート候補に使われる。
+let playersMaster = [];
+
+// ===== 人数制ごとのポジション定義 =====
+// (FW: フォワード, BK: バックス, RES: リザーブ)
+// OPR = オープンサイドプロップ / BPR = ブラインドサイドプロップ
+// HO = フッカー / SH = スクラムハーフ / SO = スタンドオフ
+// CTB = センター / WTB = ウィング
+const positionDefs = {
+  7: [
+    { no: 1, pos: 'OPR', group: 'FW', label: 'オープンプロップ' },
+    { no: 2, pos: 'HO',  group: 'FW', label: 'フッカー' },
+    { no: 3, pos: 'BPR', group: 'FW', label: 'ブラインドプロップ' },
+    { no: 4, pos: 'SH',  group: 'BK', label: 'スクラムハーフ' },
+    { no: 5, pos: 'SO',  group: 'BK', label: 'スタンドオフ' },
+    { no: 6, pos: 'CTB', group: 'BK', label: 'センター' },
+    { no: 7, pos: 'WTB', group: 'BK', label: 'ウィング' }
+  ],
+  9: [
+    { no: 1, pos: 'OPR', group: 'FW', label: 'オープンプロップ' },
+    { no: 2, pos: 'HO',  group: 'FW', label: 'フッカー' },
+    { no: 3, pos: 'BPR', group: 'FW', label: 'ブラインドプロップ' },
+    { no: 4, pos: 'SH',  group: 'BK', label: 'スクラムハーフ' },
+    { no: 5, pos: 'SO',  group: 'BK', label: 'スタンドオフ' },
+    { no: 6, pos: 'CTB', group: 'BK', label: 'インサイドCTB' },
+    { no: 7, pos: 'CTB', group: 'BK', label: 'アウトサイドCTB' },
+    { no: 8, pos: 'WTB', group: 'BK', label: '左ウィング' },
+    { no: 9, pos: 'WTB', group: 'BK', label: '右ウィング' }
+  ]
+};
+
+// ===== サンプルデータ =====
+// ourTeam: 田園のチーム名 / opponent: 相手スクール / opponentTeam: 相手のチーム（任意）
+// format: 'halves' (前半・後半) または 'single' (1本勝負) / squadSize: 7 or 9
+// periods: ピリオドごとの得失点 / 詳細メンバーは matchDetails で別管理
+const matches = [
+  // 2024年度
+  { id: 'm2401', year: 2024, date: '2024-05-12', ourTeam: 'U12-A', opponent: '青葉RS', opponentTeam: 'U12', location: '青葉公園グラウンド', type: 'friendly', typeName: '春季交流戦', ourScore: 17, theirScore: 22,
+    tries: [{p:'山田 蓮', n:2},{p:'佐藤 健太', n:1}], mvp: '山田 蓮',
+    comment: '前半は12-7とリード。後半終盤に立て続けにトライを許し逆転負け。最後の集中力を切らさないことが課題。' },
+  { id: 'm2402', year: 2024, date: '2024-06-09', ourTeam: 'U12-A', opponent: '緑が丘RS', opponentTeam: 'U12', location: '田園グラウンド', type: 'official', typeName: '春季公式戦', ourScore: 24, theirScore: 12,
+    tries: [{p:'田中 太郎', n:2},{p:'山田 蓮', n:1},{p:'高橋 大輝', n:1}], mvp: '田中 太郎',
+    comment: 'FWの突破が効いて安定した試合運び。ディフェンスも組織的に機能。' },
+  { id: 'm2403', year: 2024, date: '2024-07-14', ourTeam: 'U12-A', opponent: '海風RS', opponentTeam: 'U12-A', location: '海浜公園グラウンド', type: 'tournament', typeName: '夏季大会 予選', ourScore: 35, theirScore: 7,
+    tries: [{p:'佐藤 健太', n:2},{p:'田中 太郎', n:1},{p:'山田 蓮', n:1},{p:'鈴木 翔太', n:1}], mvp: '佐藤 健太',
+    comment: '完勝。攻守ともに圧倒。' },
+  { id: 'm2404', year: 2024, date: '2024-09-08', ourTeam: 'U12-A', opponent: '東光RS', opponentTeam: 'U12', location: '東光グラウンド', type: 'friendly', typeName: '秋季交流戦', ourScore: 12, theirScore: 19,
+    tries: [{p:'山田 蓮', n:1},{p:'田中 太郎', n:1}], mvp: '山田 蓮',
+    comment: '惜敗。ハンドリングミスが多く、せっかくのチャンスを活かせなかった。' },
+  { id: 'm2405', year: 2024, date: '2024-10-13', ourTeam: 'U10', opponent: '西山RS', opponentTeam: 'U10', location: '西山運動公園', type: 'official', typeName: '秋季公式戦', ourScore: 14, theirScore: 14,
+    tries: [{p:'高橋 翔', n:1},{p:'伊藤 颯', n:1}], mvp: '高橋 翔',
+    comment: '互角の戦いで引き分け。最後まで諦めない姿勢が良かった。' },
+  { id: 'm2406', year: 2024, date: '2024-11-10', ourTeam: 'U12-A', opponent: '南風RS', opponentTeam: 'U12', location: '南風グラウンド', type: 'tournament', typeName: '秋季大会 1回戦', ourScore: 28, theirScore: 14,
+    tries: [{p:'田中 太郎', n:2},{p:'山田 蓮', n:1},{p:'佐藤 健太', n:1}], mvp: '田中 太郎',
+    comment: '危なげない勝利。準々決勝へ進出。' },
+  { id: 'm2407', year: 2024, date: '2024-11-24', ourTeam: 'U12-A', opponent: '北星RS', opponentTeam: 'U12-A', location: '北星スタジアム', type: 'tournament', typeName: '秋季大会 準決勝', ourScore: 19, theirScore: 22,
+    tries: [{p:'山田 蓮', n:2},{p:'田中 太郎', n:1}], mvp: '山田 蓮',
+    comment: '惜しくも準決勝敗退。来年こそリベンジ。' },
+  { id: 'm2408', year: 2024, date: '2024-11-24', ourTeam: 'U12-B', opponent: '北星RS', opponentTeam: 'U12-B', location: '北星スタジアム', type: 'tournament', typeName: '秋季大会 Bチーム交流戦', ourScore: 21, theirScore: 12,
+    tries: [{p:'吉田 隼', n:1},{p:'松本 蓮', n:1},{p:'山口 大介', n:1}], mvp: '吉田 隼',
+    comment: 'Bチームも勝利。層の厚さを実感。' },
+  { id: 'm2409', year: 2024, date: '2025-02-09', ourTeam: 'U8', opponent: '青葉RS', opponentTeam: 'U8', location: '青葉公園グラウンド', type: 'friendly', typeName: '冬季交流戦', ourScore: 10, theirScore: 8,
+    tries: [{p:'小林 蒼', n:1},{p:'中村 樹', n:1}], mvp: '小林 蒼',
+    comment: 'U8初勝利！子どもたちの笑顔がすばらしかった。' },
+  { id: 'm2410', year: 2024, date: '2025-02-09', ourTeam: 'U6', opponent: '青葉RS', opponentTeam: 'U6', location: '青葉公園グラウンド', type: 'friendly', typeName: '冬季交流戦', ourScore: 4, theirScore: 4,
+    tries: [{p:'渡辺 結', n:1}], mvp: '渡辺 結',
+    comment: 'U6は引き分け。みんな最後まで走りきった。' },
+
+  // 2025年度
+  { id: 'm2501', year: 2025, date: '2025-04-13', ourTeam: 'U12-A', opponent: '青葉RS', opponentTeam: 'U12', location: '青葉公園グラウンド', type: 'friendly', typeName: '春季交流戦', ourScore: 26, theirScore: 14,
+    tries: [{p:'田中 太郎', n:2},{p:'山田 蓮', n:1},{p:'佐藤 健太', n:1}], mvp: '田中 太郎',
+    comment: '昨年の借りを返した。シーズンの良いスタート。' },
+  { id: 'm2502', year: 2025, date: '2025-05-11', ourTeam: 'U12-A', opponent: '緑が丘RS', opponentTeam: 'U12', location: '緑が丘グラウンド', type: 'official', typeName: '春季公式戦', ourScore: 31, theirScore: 17,
+    tries: [{p:'山田 蓮', n:2},{p:'田中 太郎', n:2},{p:'佐藤 健太', n:1}], mvp: '山田 蓮',
+    comment: '攻撃のリズムが良かった。BK陣の連携が向上。' },
+  { id: 'm2503', year: 2025, date: '2025-06-08', ourTeam: 'U12-A', opponent: '海風RS', opponentTeam: 'U12-A', location: '海浜公園グラウンド', type: 'tournament', typeName: '夏季大会 予選', ourScore: 21, theirScore: 24,
+    tries: [{p:'佐藤 健太', n:2},{p:'山田 蓮', n:1}], mvp: '佐藤 健太',
+    comment: '昨年勝った相手に敗北。気を引き締めて秋に備える。' },
+  { id: 'm2504', year: 2025, date: '2025-07-13', ourTeam: 'U10', opponent: '東光RS', opponentTeam: 'U10', location: '東光グラウンド', type: 'friendly', typeName: '夏季交流戦', ourScore: 22, theirScore: 10,
+    tries: [{p:'高橋 翔', n:2},{p:'伊藤 颯', n:1},{p:'渡辺 蓮', n:1}], mvp: '高橋 翔',
+    comment: 'U10も成長を感じさせる試合。' },
+  { id: 'm2505', year: 2025, date: '2025-09-14', ourTeam: 'U12-A', opponent: '西山RS', opponentTeam: 'U12-A', location: '西山運動公園', type: 'friendly', typeName: '秋季交流戦', ourScore: 33, theirScore: 12,
+    tries: [{p:'田中 太郎', n:3},{p:'山田 蓮', n:1},{p:'佐藤 健太', n:1}], mvp: '田中 太郎',
+    comment: '完勝。田中のハットトリック。' },
+  { id: 'm2506', year: 2025, date: '2025-10-12', ourTeam: 'U12-A', opponent: '南風RS', opponentTeam: 'U12', location: '南風グラウンド', type: 'tournament', typeName: '秋季大会 1回戦', ourScore: 24, theirScore: 17,
+    tries: [{p:'山田 蓮', n:2},{p:'田中 太郎', n:1},{p:'佐藤 健太', n:1}], mvp: '山田 蓮',
+    comment: '前年と同じ相手に勝利、進化を実感。' },
+  { id: 'm2507', year: 2025, date: '2025-10-26', ourTeam: 'U12-A', opponent: '北星RS', opponentTeam: 'U12-A', location: '北星スタジアム', type: 'tournament', typeName: '秋季大会 準決勝', ourScore: 28, theirScore: 21,
+    tries: [{p:'田中 太郎', n:2},{p:'山田 蓮', n:1},{p:'佐藤 健太', n:1}], mvp: '田中 太郎',
+    comment: '昨年のリベンジ達成！決勝進出。' },
+  { id: 'm2508', year: 2025, date: '2025-11-09', ourTeam: 'U12-A', opponent: '中央RS', opponentTeam: 'U12', location: '中央運動場', type: 'tournament', typeName: '秋季大会 決勝', ourScore: 14, theirScore: 28,
+    tries: [{p:'山田 蓮', n:1},{p:'田中 太郎', n:1}], mvp: '山田 蓮',
+    comment: '初の決勝進出で準優勝。来年こそ優勝を。' },
+  { id: 'm2509', year: 2025, date: '2025-11-09', ourTeam: 'U12-B', opponent: '中央RS', opponentTeam: 'U12-B', location: '中央運動場', type: 'tournament', typeName: '秋季大会 Bチーム交流戦', ourScore: 17, theirScore: 14,
+    tries: [{p:'松本 蓮', n:1},{p:'山口 大介', n:1},{p:'吉田 隼', n:1}], mvp: '山口 大介',
+    comment: 'Bチームも接戦を制した。' },
+  { id: 'm2510', year: 2025, date: '2026-02-15', ourTeam: 'U8', opponent: '青葉RS', opponentTeam: 'U8', location: '青葉公園グラウンド', type: 'friendly', typeName: '冬季交流戦', ourScore: 14, theirScore: 12,
+    tries: [{p:'中村 樹', n:1},{p:'小林 蒼', n:1}], mvp: '中村 樹',
+    comment: 'U8も着実に成長中。' },
+
+  // 2026年度
+  { id: 'm2601', year: 2026, date: '2026-04-05', ourTeam: 'U12-A', opponent: '緑が丘RS', opponentTeam: 'U12', location: '田園グラウンド', type: 'tournament', typeName: '春季大会 1回戦', ourScore: 35, theirScore: 14,
+    tries: [{p:'田中 太郎', n:3},{p:'佐藤 健太', n:1},{p:'山田 蓮', n:1}], mvp: '田中 太郎',
+    comment: '春季大会優勝への好スタート！' },
+  { id: 'm2602', year: 2026, date: '2026-04-12', ourTeam: 'U12-A', opponent: '海風RS', opponentTeam: 'U12-A', location: '海浜公園グラウンド', type: 'tournament', typeName: '春季大会 準決勝', ourScore: 24, theirScore: 17,
+    tries: [{p:'山田 蓮', n:2},{p:'田中 太郎', n:1},{p:'佐藤 健太', n:1}], mvp: '山田 蓮',
+    comment: '苦戦したが粘り勝ち。決勝進出！' },
+  { id: 'm2603', year: 2026, date: '2026-04-19', ourTeam: 'U12-A', opponent: '青葉RS', opponentTeam: 'U12-A', location: '青葉公園グラウンド', type: 'tournament', typeName: '春季大会 決勝', ourScore: 28, theirScore: 14,
+    tries: [{p:'田中 太郎', n:2},{p:'佐藤 健太', n:1},{p:'山田 蓮', n:1}], mvp: '田中 太郎',
+    comment: '春季大会優勝！3年越しの悲願達成。子どもたちもコーチも涙。' },
+  { id: 'm2604', year: 2026, date: '2026-04-19', ourTeam: 'U10', opponent: '青葉RS', opponentTeam: 'U10', location: '青葉公園グラウンド', type: 'friendly', typeName: '春季交流戦', ourScore: 19, theirScore: 12,
+    tries: [{p:'高橋 翔', n:1},{p:'伊藤 颯', n:1},{p:'渡辺 蓮', n:1}], mvp: '高橋 翔',
+    comment: 'U10も勝利。来年のU12が楽しみ。' }
+];
+
+const typeCls = { friendly: 'tag-type-friendly', official: 'tag-type-official', tournament: 'tag-type-tournament' };
+
+// ===== 詳細記録（試合形式・メンバー・交代） =====
+// 全試合に詳細を入れなくてもOK。データがある試合だけ豊かに表示される。
+// format: 'halves' = 前半/後半 / 'single' = 1本勝負
+// squadSize: 7 (7人制) or 9 (9人制)
+// periods: 各ピリオドのスコア
+// lineup: スターティング + リザーブ。playerが空欄の場合は欠員として扱う
+// subs: 交代記録
+const matchDetails = {
+  // 春季大会 決勝（U12-A vs 青葉RS U12-A）= 28-14
+  'm2603': {
+    format: 'halves', squadSize: 7,
+    periods: [
+      { name: '前半', minutes: 15, ourTries: 2, ourGoals: 2, ourScore: 14, theirTries: 1, theirGoals: 1, theirScore: 7 },
+      { name: '後半', minutes: 15, ourTries: 2, ourGoals: 2, ourScore: 14, theirTries: 1, theirGoals: 1, theirScore: 7 }
+    ],
+    lineup: [
+      { no: 1, pos: 'OPR', player: '田中 太郎' },
+      { no: 2, pos: 'HO',  player: '山田 健太' },
+      { no: 3, pos: 'BPR', player: '山口 大介' },
+      { no: 4, pos: 'SH',  player: '佐藤 健太' },
+      { no: 5, pos: 'SO',  player: '高橋 翔' },
+      { no: 6, pos: 'CTB', player: '山田 蓮' },
+      { no: 7, pos: 'WTB', player: '鈴木 翔太' }
+    ],
+    reserves: [
+      { no: 8, pos: 'リザーブ', player: '吉田 隼' },
+      { no: 9, pos: 'リザーブ', player: '松本 蓮' },
+      { no: 10, pos: 'リザーブ', player: '渡辺 蓮' }
+    ],
+    subs: [
+      { time: '前半 終了', period: '前半', out: '田中 太郎', in: '吉田 隼', no: 1, pos: 'OPR', reason: '戦術交代' },
+      { time: '後半 8分', period: '後半', out: '鈴木 翔太', in: '松本 蓮', no: 7, pos: 'WTB', reason: '怪我（軽傷）' },
+      { time: '後半 12分', period: '後半', out: '山田 蓮', in: '渡辺 蓮', no: 6, pos: 'CTB', reason: '戦術交代' }
+    ]
+  },
+  // 春季大会 準決勝（U12-A vs 海風RS U12-A）= 24-17
+  'm2602': {
+    format: 'halves', squadSize: 7,
+    periods: [
+      { name: '前半', minutes: 15, ourTries: 2, ourGoals: 0, ourScore: 10, theirTries: 2, theirGoals: 1, theirScore: 12 },
+      { name: '後半', minutes: 15, ourTries: 2, ourGoals: 2, ourScore: 14, theirTries: 1, theirGoals: 0, theirScore: 5 }
+    ],
+    lineup: [
+      { no: 1, pos: 'OPR', player: '田中 太郎' },
+      { no: 2, pos: 'HO',  player: '山田 健太' },
+      { no: 3, pos: 'BPR', player: '山口 大介' },
+      { no: 4, pos: 'SH',  player: '佐藤 健太' },
+      { no: 5, pos: 'SO',  player: '高橋 翔' },
+      { no: 6, pos: 'CTB', player: '山田 蓮' },
+      { no: 7, pos: 'WTB', player: '鈴木 翔太' }
+    ],
+    reserves: [
+      { no: 8, pos: 'リザーブ', player: '吉田 隼' },
+      { no: 9, pos: 'リザーブ', player: '松本 蓮' }
+    ],
+    subs: [
+      { time: '前半 18分', period: '前半', out: '佐藤 健太', in: '松本 蓮', no: 4, pos: 'SH', reason: '戦術交代' },
+      { time: '後半 5分', period: '後半', out: '松本 蓮', in: '佐藤 健太', no: 4, pos: 'SH', reason: '再投入' }
+    ]
+  },
+  // U10 vs 青葉RS U10 = 19-12（9人制 / 1本勝負）
+  'm2604': {
+    format: 'single', squadSize: 9, totalMinutes: 20,
+    periods: [
+      { name: '本戦', minutes: 20, ourTries: 3, ourGoals: 2, ourScore: 19, theirTries: 2, theirGoals: 1, theirScore: 12 }
+    ],
+    lineup: [
+      { no: 1, pos: 'OPR', player: '小林 蒼' },
+      { no: 2, pos: 'HO',  player: '中村 樹' },
+      { no: 3, pos: 'BPR', player: '伊藤 颯' },
+      { no: 4, pos: 'SH',  player: '渡辺 蓮' },
+      { no: 5, pos: 'SO',  player: '高橋 翔' },
+      { no: 6, pos: 'CTB', player: '高橋 大輝' },
+      { no: 7, pos: 'CTB', player: '田中 海斗' },
+      { no: 8, pos: 'WTB', player: '山田 蓮' },
+      { no: 9, pos: 'WTB', player: '鈴木 翔太' }
+    ],
+    reserves: [
+      { no: 10, pos: 'リザーブ', player: '松本 蓮' },
+      { no: 11, pos: 'リザーブ', player: '吉田 隼' }
+    ],
+    subs: [
+      { time: '10分経過', period: '本戦', out: '中村 樹', in: '松本 蓮', no: 2, pos: 'HO', reason: '戦術交代' }
+    ]
+  },
+  // 春季大会 1回戦 = 35-14
+  'm2601': {
+    format: 'halves', squadSize: 7,
+    periods: [
+      { name: '前半', minutes: 15, ourTries: 3, ourGoals: 3, ourScore: 21, theirTries: 1, theirGoals: 1, theirScore: 7 },
+      { name: '後半', minutes: 15, ourTries: 2, ourGoals: 2, ourScore: 14, theirTries: 1, theirGoals: 1, theirScore: 7 }
+    ],
+    lineup: [
+      { no: 1, pos: 'OPR', player: '田中 太郎' },
+      { no: 2, pos: 'HO',  player: '山田 健太' },
+      { no: 3, pos: 'BPR', player: '山口 大介' },
+      { no: 4, pos: 'SH',  player: '佐藤 健太' },
+      { no: 5, pos: 'SO',  player: '高橋 翔' },
+      { no: 6, pos: 'CTB', player: '山田 蓮' },
+      { no: 7, pos: 'WTB', player: '吉田 隼' }
+    ],
+    reserves: [
+      { no: 8, pos: 'リザーブ', player: '松本 蓮' }
+    ],
+    subs: []
+  },
+  // U8 冬季交流戦 = 14-12 (1本勝負例)
+  'm2510': {
+    format: 'single', squadSize: 7, totalMinutes: 10,
+    periods: [
+      { name: '本戦', minutes: 10, ourTries: 2, ourGoals: 2, ourScore: 14, theirTries: 2, theirGoals: 1, theirScore: 12 }
+    ],
+    lineup: [
+      { no: 1, pos: 'OPR', player: '小林 蒼' },
+      { no: 2, pos: 'HO',  player: '中村 樹' },
+      { no: 3, pos: 'BPR', player: '伊藤 颯' },
+      { no: 4, pos: 'SH',  player: '渡辺 結' },
+      { no: 5, pos: 'SO',  player: '田中 海斗' },
+      { no: 6, pos: 'CTB', player: '高橋 大輝' },
+      { no: 7, pos: 'WTB', player: '佐々木 桜' }
+    ],
+    reserves: [],
+    subs: []
+  }
+};
+
+// ===== チームフィルタpillを動的生成 =====
+function buildTeamFilter() {
+  const wrap = document.getElementById('team-filter');
+  const allBtn = `<button class="filter-pill active" data-team="all">すべて</button>`;
+  const teamBtns = teams.map(t => `<button class="filter-pill" data-team="${t}">${t}</button>`).join('');
+  wrap.innerHTML = allBtn + teamBtns;
+  wrap.addEventListener('click', e => {
+    if (!e.target.classList.contains('filter-pill')) return;
+    document.querySelectorAll('#team-filter .filter-pill').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    state.team = e.target.dataset.team;
+    renderAll();
+  });
+}
+
+// ===== 状態 =====
+let state = { year: 'all', team: 'all', type: 'all' };
+let trendChart = null, resultChart = null;
+
+// ===== ユーティリティ =====
+function result(m) {
+  if (m.ourScore > m.theirScore) return 'w';
+  if (m.ourScore < m.theirScore) return 'l';
+  return 'd';
+}
+function fmtDate(s) {
+  const d = new Date(s);
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getMonth()+1}/${d.getDate()} (${dow})`;
+}
+function fmtFullDate(s) {
+  const d = new Date(s);
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${dow})`;
+}
+function getFiltered(opts = {}) {
+  const includeScheduled = opts.includeScheduled || false;
+  return matches.filter(m =>
+    (includeScheduled || m.status !== 'scheduled') &&
+    (state.year === 'all' || m.year === parseInt(state.year)) &&
+    (state.team === 'all' || m.ourTeam === state.team) &&
+    (state.type === 'all' || m.type === state.type)
+  );
+}
+function getScheduled() {
+  return matches.filter(m =>
+    m.status === 'scheduled' &&
+    (state.year === 'all' || m.year === parseInt(state.year)) &&
+    (state.team === 'all' || m.ourTeam === state.team) &&
+    (state.type === 'all' || m.type === state.type)
+  );
+}
+
+// ===== サマリー =====
+function renderSummary() {
+  const list = getFiltered();
+  const w = list.filter(m => result(m) === 'w').length;
+  const l = list.filter(m => result(m) === 'l').length;
+  const d = list.filter(m => result(m) === 'd').length;
+  const total = list.length;
+  const winRate = total ? Math.round((w / total) * 100) : 0;
+  const ptsFor = list.reduce((s,m) => s + m.ourScore, 0);
+  const ptsAgainst = list.reduce((s,m) => s + m.theirScore, 0);
+  const avgFor = total ? (ptsFor / total).toFixed(1) : '0.0';
+  const avgAgainst = total ? (ptsAgainst / total).toFixed(1) : '0.0';
+
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-card">
+      <div class="label">試合数</div>
+      <div class="value">${total}</div>
+      <div class="sub">${state.year === 'all' ? '全期間' : state.year + '年度'}${state.team !== 'all' ? ' / ' + state.team : ''}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">勝-分-敗</div>
+      <div class="wld-row">
+        <span class="w">${w}</span><span class="sep">-</span>
+        <span class="d">${d}</span><span class="sep">-</span>
+        <span class="l">${l}</span>
+      </div>
+      <div class="sub">勝率 ${winRate}%</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">平均得点</div>
+      <div class="value">${avgFor}</div>
+      <div class="sub">合計 ${ptsFor}点</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">平均失点</div>
+      <div class="value">${avgAgainst}</div>
+      <div class="sub">合計 ${ptsAgainst}点</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">得失点差</div>
+      <div class="value" style="color: ${ptsFor - ptsAgainst >= 0 ? 'var(--win)' : 'var(--lose)'}">
+        ${ptsFor - ptsAgainst >= 0 ? '+' : ''}${ptsFor - ptsAgainst}
+      </div>
+      <div class="sub">1試合平均 ${total ? ((ptsFor - ptsAgainst) / total).toFixed(1) : '0.0'}</div>
+    </div>
+  `;
+}
+
+// ===== チャート =====
+function renderCharts() {
+  const list = getFiltered().sort((a,b) => a.date.localeCompare(b.date));
+  const labels = list.map(m => `${fmtDate(m.date)} ${m.ourTeam}`);
+  const ourData = list.map(m => m.ourScore);
+  const theirData = list.map(m => m.theirScore);
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('chart-trend'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '田園 得点', data: ourData, borderColor: '#1a3a8a', backgroundColor: 'rgba(26,58,138,0.1)', tension: 0.3, fill: true },
+        { label: '相手 得点', data: theirData, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.3, fill: true }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  const w = list.filter(m => result(m) === 'w').length;
+  const l = list.filter(m => result(m) === 'l').length;
+  const d = list.filter(m => result(m) === 'd').length;
+  if (resultChart) resultChart.destroy();
+  resultChart = new Chart(document.getElementById('chart-result'), {
+    type: 'doughnut',
+    data: {
+      labels: ['勝ち', '引き分け', '負け'],
+      datasets: [{ data: [w, d, l], backgroundColor: ['#16a34a', '#9ca3af', '#dc2626'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } } },
+      cutout: '60%'
+    }
+  });
+}
+
+// ===== タイムライン =====
+function renderTimeline() {
+  const completed = getFiltered().sort((a,b) => b.date.localeCompare(a.date));
+  const scheduled = getScheduled().sort((a,b) => a.date.localeCompare(b.date));
+  document.getElementById('match-count').textContent = `${completed.length} 試合`;
+
+  // 予定セクション
+  const schedSec = document.getElementById('scheduled-section');
+  if (scheduled.length) {
+    schedSec.style.display = 'block';
+    schedSec.innerHTML = `
+      <div class="sched-head">
+        <span>📅 試合予定 <span style="font-weight:400; margin-left:6px;">${scheduled.length}件</span></span>
+        <span style="font-size:11px; font-weight:500;">クリックで編集／結果入力</span>
+      </div>
+      ${scheduled.map(m => {
+        const oppDisplay = m.opponent + (m.opponentTeam ? ' ' + m.opponentTeam : '');
+        const savedBadge = isUserSaved(m.id) ? `<span class="tag-saved" style="margin-left:6px;" title="ブラウザに保存済">💾 保存済</span>` : '';
+        return `
+          <div class="scheduled-row" onclick="openForm('${m.id}')">
+            <div class="sched-date">${fmtDate(m.date)}<br><span style="font-size:11px;">${m.year}年度</span></div>
+            <div class="sched-info">
+              <div>田園 ${m.ourTeam} <span style="color:var(--text-sub); font-weight:400;">vs</span> ${oppDisplay} ${savedBadge}</div>
+              <div style="margin-top:4px;">
+                <span class="small-tag tag-team">${m.ourTeam}</span>
+                <span class="small-tag ${typeCls[m.type]}">${m.typeName}</span>
+                ${m.location ? `<span style="font-size:11px; color:var(--text-sub); margin-left:4px;">📍${m.location}</span>` : ''}
+              </div>
+            </div>
+            <button class="sched-record-btn" onclick="event.stopPropagation(); recordResult('${m.id}')">📝 結果を記録</button>
+          </div>
+        `;
+      }).join('')}
+    `;
+  } else {
+    schedSec.style.display = 'none';
+    schedSec.innerHTML = '';
+  }
+
+  // 試合履歴
+  const tl = document.getElementById('timeline');
+  if (!completed.length) {
+    tl.innerHTML = '<div style="padding:40px; text-align:center; color:#9ca3af;">該当する試合がありません</div>';
+    return;
+  }
+  tl.innerHTML = completed.map(m => {
+    const r = result(m);
+    const oppDisplay = m.opponent + (m.opponentTeam ? ' ' + m.opponentTeam : '');
+    const detail = matchDetails[m.id];
+    const detailBadge = detail ? `<span class="format-badge" title="メンバー・交代記録あり">📋 ${detail.format === 'halves' ? '前後半' : '1本勝負'} / ${detail.squadSize}人</span>` : '';
+    const photoBadge = (detail && detail.photos && detail.photos.length) ? `<span class="format-badge">📷 ${detail.photos.length}枚</span>` : '';
+    const savedBadge = isUserSaved(m.id) ? `<span class="tag-saved" title="ブラウザに保存済">💾 保存済</span>` : '';
+    return `
+      <div class="match-row" onclick="openModal('${m.id}')">
+        <div class="match-date">${fmtDate(m.date)}<br><span style="font-size:11px;">${m.year}年度</span></div>
+        <div class="match-info">
+          <div class="match-vs"><span class="home">田園 ${m.ourTeam}</span><span class="vs-sep">vs</span>${oppDisplay}</div>
+          <div class="match-tags">
+            <span class="small-tag tag-team">${m.ourTeam}</span>
+            <span class="small-tag ${typeCls[m.type]}">${m.typeName}</span>
+            ${detailBadge}
+            ${photoBadge}
+            ${savedBadge}
+          </div>
+        </div>
+        <div class="match-score-block">
+          <div class="score-result score-${r}">${r === 'w' ? 'W' : r === 'l' ? 'L' : 'D'}</div>
+          <div class="score-numbers">${m.ourScore}<span class="vs">-</span>${m.theirScore}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 試合がユーザー保存（localStorage）由来かを判定
+function isUserSaved(id) {
+  const m = matches.find(x => x.id === id);
+  return !!(m && m.userSaved);
+}
+
+// 予定→結果記録モードに切り替えて編集モーダルを開く
+function recordResult(id) {
+  openForm(id);
+  // statusを「結果記録」に切り替え
+  formState.status = 'completed';
+  document.querySelector('input[name="f-status"][value="completed"]').checked = true;
+  // スコアタブへ
+  switchFormTab('form-score');
+  toast('スコア・メンバー等を入力して保存してください');
+}
+
+// ===== 田園 チーム別成績テーブル =====
+function renderTeamTable() {
+  const list = getFiltered();
+  const map = {};
+  teams.forEach(t => { map[t] = { name: t, w: 0, l: 0, d: 0, ptsFor: 0, ptsAgainst: 0 }; });
+  list.forEach(m => {
+    if (!map[m.ourTeam]) map[m.ourTeam] = { name: m.ourTeam, w: 0, l: 0, d: 0, ptsFor: 0, ptsAgainst: 0 };
+    map[m.ourTeam][result(m)]++;
+    map[m.ourTeam].ptsFor += m.ourScore;
+    map[m.ourTeam].ptsAgainst += m.theirScore;
+  });
+  const rows = Object.values(map)
+    .filter(t => (t.w + t.l + t.d) > 0)
+    .sort((a,b) => (b.w + b.l + b.d) - (a.w + a.l + a.d))
+    .map(t => {
+      const total = t.w + t.l + t.d;
+      const wr = total ? Math.round((t.w / total) * 100) : 0;
+      const diff = t.ptsFor - t.ptsAgainst;
+      return `
+        <tr>
+          <td><strong style="color: var(--accent);">${t.name}</strong></td>
+          <td class="num">${total}</td>
+          <td class="num"><span class="w">${t.w}</span>-<span class="d">${t.d}</span>-<span class="l">${t.l}</span></td>
+          <td class="num">${wr}%</td>
+          <td class="num">${diff >= 0 ? '+' : ''}${diff}</td>
+        </tr>
+      `;
+    }).join('');
+  document.getElementById('team-table').innerHTML = rows || '<tr><td colspan="5" style="text-align:center; color:#9ca3af; padding:24px;">データなし</td></tr>';
+}
+
+// ===== 対戦相手別 =====
+function renderOpponentTable() {
+  const list = getFiltered();
+  const map = {};
+  list.forEach(m => {
+    if (!map[m.opponent]) map[m.opponent] = { name: m.opponent, w: 0, l: 0, d: 0, matches: [] };
+    map[m.opponent].matches.push(m);
+    map[m.opponent][result(m)]++;
+  });
+  const rows = Object.values(map)
+    .sort((a,b) => (b.w + b.l + b.d) - (a.w + a.l + a.d))
+    .map(o => {
+      const recent = o.matches
+        .sort((a,b) => b.date.localeCompare(a.date))
+        .slice(0, 5)
+        .reverse()
+        .map(m => {
+          const r = result(m);
+          const color = r === 'w' ? '#16a34a' : r === 'l' ? '#dc2626' : '#9ca3af';
+          return `<span class="form-dot" style="background:${color}" title="${fmtFullDate(m.date)} 田園${m.ourTeam} ${m.ourScore}-${m.theirScore}">${r === 'w' ? 'W' : r === 'l' ? 'L' : 'D'}</span>`;
+        }).join('');
+      return `
+        <tr>
+          <td><strong>${o.name}</strong></td>
+          <td class="num">${o.w + o.l + o.d}</td>
+          <td class="num"><span class="w">${o.w}</span>-<span class="d">${o.d}</span>-<span class="l">${o.l}</span></td>
+          <td><div class="recent-form">${recent}</div></td>
+        </tr>
+      `;
+    }).join('');
+  document.getElementById('opponent-table').innerHTML = rows || '<tr><td colspan="4" style="text-align:center; color:#9ca3af; padding:24px;">データなし</td></tr>';
+}
+
+// ===== モーダル =====
+function openModal(id) {
+  const m = matches.find(x => x.id === id);
+  if (!m) return;
+  const detail = matchDetails[id]; // 詳細記録（任意）
+  const r = result(m);
+  const oppDisplay = m.opponent + (m.opponentTeam ? ' ' + m.opponentTeam : '');
+  // 編集ボタン
+  const editBtn = document.getElementById('m-edit-btn');
+  editBtn.onclick = () => { closeModal(); openForm(id); };
+
+  // ヘッダー
+  document.getElementById('m-home-team').textContent = `田園RS ${m.ourTeam}`;
+  document.getElementById('m-opp-display').textContent = oppDisplay;
+  document.getElementById('m-meta').innerHTML = `
+    ${fmtFullDate(m.date)}
+    <span class="small-tag tag-team">${m.ourTeam}</span>
+    <span class="small-tag ${typeCls[m.type]}">${m.typeName}</span>
+    ${detail ? `<span class="format-badge">${detail.format === 'halves' ? '前後半' : '1本勝負'} / ${detail.squadSize}人制</span>` : ''}
+  `;
+
+  // 結果バナー・スコア
+  document.getElementById('m-banner').className = 'result-banner ' + r;
+  document.getElementById('m-banner').textContent = r === 'w' ? '🎉 勝利' : r === 'l' ? '😢 敗北' : '🤝 引き分け';
+  document.getElementById('m-our-team-sub').textContent = m.ourTeam;
+  document.getElementById('m-our').textContent = m.ourScore;
+  document.getElementById('m-their').textContent = m.theirScore;
+  document.getElementById('m-opp-name').textContent = oppDisplay;
+  document.getElementById('m-location').textContent = m.location;
+
+  // ピリオド別スコア（左右カード型 T/G/得点）
+  const periodSection = document.getElementById('m-period-section');
+  if (detail && detail.periods) {
+    periodSection.style.display = 'block';
+    document.getElementById('m-format-badge').textContent =
+      detail.format === 'halves' ? '前後半制' : '1本勝負' + (detail.totalMinutes ? ` / ${detail.totalMinutes}分` : '');
+
+    const sum = (k) => detail.periods.reduce((s, p) => s + (p[k] || 0), 0);
+
+    function buildCard(side, teamLabel, totalScore, getTries, getGoals, getScore, sumTries, sumGoals) {
+      const head = '<thead><tr><th class="row-label"></th>'
+        + detail.periods.map(p => `<th>${p.name}${p.minutes ? `<br><span style="font-weight:400; font-size:10px; color:#9ca3af;">${p.minutes}分</span>` : ''}</th>`).join('')
+        + '<th class="col-total">合計</th></tr></thead>';
+      const tRow = '<tr>'
+        + '<td class="row-label"><span class="stat-label">T</span>トライ</td>'
+        + detail.periods.map(p => `<td>${getTries(p) ?? '-'}</td>`).join('')
+        + `<td class="col-total">${sumTries}</td></tr>`;
+      const gRow = '<tr>'
+        + '<td class="row-label"><span class="stat-label">G</span>ゴール</td>'
+        + detail.periods.map(p => `<td>${getGoals(p) ?? '-'}</td>`).join('')
+        + `<td class="col-total">${sumGoals}</td></tr>`;
+      const ptsRow = '<tr class="row-pts">'
+        + '<td class="row-label">得点</td>'
+        + detail.periods.map(p => `<td>${getScore(p)}</td>`).join('')
+        + `<td class="col-total">${totalScore}</td></tr>`;
+      return `
+        <div class="period-card ${side}">
+          <div class="pc-head">
+            <span>${teamLabel}</span>
+            <span class="pc-total-score">${totalScore}</span>
+          </div>
+          <table class="pc-table">${head}<tbody>${tRow}${gRow}${ptsRow}</tbody></table>
+        </div>`;
+    }
+
+    const homeCard = buildCard(
+      'home',
+      `🏠 田園 ${m.ourTeam}`,
+      m.ourScore,
+      p => p.ourTries, p => p.ourGoals, p => p.ourScore,
+      sum('ourTries'), sum('ourGoals')
+    );
+    const awayCard = buildCard(
+      'away',
+      `✈️ ${oppDisplay}`,
+      m.theirScore,
+      p => p.theirTries, p => p.theirGoals, p => p.theirScore,
+      sum('theirTries'), sum('theirGoals')
+    );
+
+    document.getElementById('m-periods').innerHTML = homeCard + awayCard;
+  } else {
+    periodSection.style.display = 'none';
+  }
+
+  // トライ・コメント
+  document.getElementById('m-tries').innerHTML = m.tries.map(t =>
+    `<div class="try-item"><span>${t.p}</span><span class="try-count">${t.n}T</span></div>`
+  ).join('');
+  document.getElementById('m-comment').textContent = m.comment;
+
+  // 写真ギャラリー
+  const photosSec = document.getElementById('m-photos-section');
+  const photos = (detail && detail.photos) ? detail.photos : [];
+  if (photos.length) {
+    photosSec.style.display = 'block';
+    document.getElementById('m-photos-count').textContent = `${photos.length}枚`;
+    document.getElementById('m-photos').innerHTML = photos.map((p, i) => `
+      <div class="gphoto" onclick="openPhotoLightbox(${JSON.stringify(photos).replace(/"/g, '&quot;')}, ${i})">
+        <img src="${p.dataUrl}" alt="">
+      </div>
+    `).join('');
+    // 巨大JSONインラインを避け、関数経由で開く
+    document.getElementById('m-photos').querySelectorAll('.gphoto').forEach((el, i) => {
+      el.onclick = () => openPhotoLightbox(photos, i);
+    });
+  } else {
+    photosSec.style.display = 'none';
+  }
+
+  // メンバー
+  renderLineupTab(detail);
+  // 交代
+  renderSubsTab(detail);
+
+  // タブをリセット
+  document.querySelectorAll('.detail-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  document.querySelectorAll('.tab-pane').forEach((p, i) => p.classList.toggle('active', i === 0));
+
+  document.getElementById('modal-backdrop').classList.add('active');
+}
+
+function renderLineupTab(detail) {
+  const wrap = document.getElementById('m-lineup-wrap');
+  const badge = document.getElementById('m-squad-badge');
+  if (!detail || !detail.lineup) {
+    badge.textContent = '';
+    wrap.innerHTML = '<div style="padding:24px; text-align:center; color:#9ca3af; background:white; border-radius:8px;">この試合のメンバー記録はまだありません</div>';
+    return;
+  }
+  badge.textContent = `${detail.squadSize}人制`;
+  const posClass = (g) => g === 'FW' ? 'pos-fw' : 'pos-bk';
+  const positions = positionDefs[detail.squadSize] || [];
+  const groupOf = (no) => {
+    const def = positions.find(p => p.no === no);
+    return def ? def.group : '';
+  };
+
+  let html = '<table class="lineup-table">';
+  html += '<thead><tr><th class="col-no">#</th><th class="col-pos">ポジ</th><th>選手</th></tr></thead><tbody>';
+  html += `<tr><td colspan="3" class="lineup-section-divider">⚪ スターティング ${detail.lineup.length}人</td></tr>`;
+  detail.lineup.forEach(p => {
+    const grp = groupOf(p.no);
+    html += `<tr><td class="col-no">${p.no}</td><td class="col-pos ${posClass(grp)}">${p.pos}</td><td class="player-name">${p.player || '<span style="color:#dc2626;">欠員</span>'}</td></tr>`;
+  });
+  if (detail.reserves && detail.reserves.length) {
+    html += `<tr><td colspan="3" class="lineup-section-divider">🔁 リザーブ ${detail.reserves.length}人</td></tr>`;
+    detail.reserves.forEach(p => {
+      html += `<tr class="reserve-row"><td class="col-no">${p.no}</td><td class="col-pos">RES</td><td>${p.player}</td></tr>`;
+    });
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function renderSubsTab(detail) {
+  const wrap = document.getElementById('m-subs-wrap');
+  if (!detail || !detail.subs || detail.subs.length === 0) {
+    wrap.innerHTML = '<div style="padding:24px; text-align:center; color:#9ca3af; background:white; border-radius:8px;">この試合の交代記録はありません</div>';
+    return;
+  }
+  let html = '<div class="subs-list">';
+  detail.subs.forEach(s => {
+    html += `
+      <div class="sub-item">
+        <div class="sub-time">${s.time}</div>
+        <div class="sub-content">
+          <span class="sub-pos">${s.no ? '#' + s.no + ' ' : ''}${s.pos || ''}</span>
+          <span class="sub-out">${s.out}</span>
+          <span class="sub-arrow">→</span>
+          <span class="sub-in">${s.in}</span>
+          ${s.reason ? `<span style="color:#5b6987; font-size:12px;">（${s.reason}）</span>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('active');
+}
+document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// タブ切替
+document.querySelectorAll('.detail-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.pane).classList.add('active');
+  });
+});
+
+// ===== 全体再描画 =====
+function renderAll() {
+  renderSummary();
+  renderCharts();
+  renderTimeline();
+  renderTeamTable();
+  renderOpponentTable();
+}
+
+// ===== イベントバインド =====
+document.getElementById('year-tabs').addEventListener('click', e => {
+  if (!e.target.classList.contains('year-tab')) return;
+  document.querySelectorAll('.year-tab').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  state.year = e.target.dataset.year;
+  renderAll();
+});
+document.getElementById('type-filter').addEventListener('click', e => {
+  if (!e.target.classList.contains('filter-pill')) return;
+  document.querySelectorAll('#type-filter .filter-pill').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  state.type = e.target.dataset.type;
+  renderAll();
+});
+
+// ============================================================
+// ===== 入力フォーム / localStorage / CSV出力 =====
+// ============================================================
+
+const LS_KEYS = {
+  matches: 'denenrs_user_matches',
+  details: 'denenrs_user_details',
+  templates: 'denenrs_lineup_templates',
+  teams: 'denenrs_master_teams',
+  players: 'denenrs_master_players'
+};
+
+// ===== localStorage 読み書き =====
+function lsLoad(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch (e) { return fallback; }
+}
+function lsSave(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.warn(e); }
+}
+
+// 起動時：保存済みデータを読み込み、サンプルとマージ
+function loadStoredData() {
+  const userMatches = lsLoad(LS_KEYS.matches, []);
+  const userDetails = lsLoad(LS_KEYS.details, {});
+  // 既存ID重複は上書き（編集対応）
+  userMatches.forEach(um => {
+    const idx = matches.findIndex(m => m.id === um.id);
+    if (idx >= 0) matches[idx] = um; else matches.push(um);
+  });
+  Object.assign(matchDetails, userDetails);
+
+  // マスタも読み込み（保存済みがあればそれを優先）
+  const savedTeams = lsLoad(LS_KEYS.teams, null);
+  if (savedTeams && savedTeams.length) teams = savedTeams;
+  playersMaster = lsLoad(LS_KEYS.players, []);
+}
+
+// ===== 候補値の収集（オートコンプリート用） =====
+function collectCandidates() {
+  const opps = new Set(), locs = new Set(), players = new Set();
+  // マスタ登録分を最優先で含める
+  playersMaster.forEach(p => players.add(p));
+  matches.forEach(m => {
+    if (m.opponent) opps.add(m.opponent);
+    if (m.location) locs.add(m.location);
+    (m.tries || []).forEach(t => players.add(t.p));
+  });
+  Object.values(matchDetails).forEach(d => {
+    [...(d.lineup || []), ...(d.reserves || [])].forEach(p => p.player && players.add(p.player));
+    (d.subs || []).forEach(s => { s.in && players.add(s.in); s.out && players.add(s.out); });
+  });
+  return {
+    opps: [...opps].sort(),
+    locs: [...locs].sort(),
+    players: [...players].sort()
+  };
+}
+function refreshDatalists() {
+  // 対戦相手は毎回記入式（マスタなし）。場所と選手のみ過去履歴をサジェスト。
+  const c = collectCandidates();
+  const dlLoc = document.getElementById('dl-locations');
+  const dlPl = document.getElementById('dl-players');
+  if (dlLoc) dlLoc.innerHTML = c.locs.map(o => `<option value="${o}">`).join('');
+  if (dlPl) dlPl.innerHTML = c.players.map(o => `<option value="${o}">`).join('');
+}
+
+// ===== トースト通知 =====
+function toast(msg, type = '') {
+  const t = document.getElementById('form-toast');
+  t.textContent = msg;
+  t.className = 'form-toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ===== フォーム開閉 =====
+// 注: インラインon*属性からも参照するため window にも露出
+let formState = null;
+window.formState = null;
+
+function openForm(matchId = null) {
+  // チームselect
+  const sel = document.getElementById('f-our-team');
+  sel.innerHTML = teams.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  // 既存試合の編集 or 新規
+  if (matchId) {
+    const m = matches.find(x => x.id === matchId);
+    const d = matchDetails[matchId] || {};
+    formState = { editingId: matchId, ...buildFormStateFromMatch(m, d) };
+    document.getElementById('form-title').textContent = '✏️ 試合を編集';
+  } else {
+    formState = newFormState();
+    document.getElementById('form-title').textContent = '＋ 新しい試合を記録';
+  }
+  window.formState = formState; // インライン属性から参照可能に
+  applyFormState();
+  refreshDatalists();
+  refreshTemplateSelect();
+  // 1タブ目を表示
+  switchFormTab('form-info');
+  document.getElementById('form-modal').classList.add('active');
+}
+
+function closeForm() {
+  document.getElementById('form-modal').classList.remove('active');
+  formState = null;
+  window.formState = null;
+}
+
+function newFormState() {
+  return {
+    editingId: null,
+    status: 'completed',  // 'completed' | 'scheduled'
+    date: new Date().toISOString().slice(0, 10),
+    ourTeam: teams[0],
+    opponent: '',
+    opponentTeam: '',
+    location: '',
+    type: 'friendly',
+    typeName: '',
+    format: 'halves',
+    squadSize: 7,
+    minutes: 15,
+    periods: makePeriods('halves', 15),
+    lineup: [],
+    reserves: [],
+    tries: [],
+    subs: [],
+    photos: [],
+    comment: ''
+  };
+}
+
+function makePeriods(format, mins) {
+  if (format === 'halves') {
+    return [
+      { name: '前半', minutes: mins, ourTries: 0, ourGoals: 0, ourScore: 0, theirTries: 0, theirGoals: 0, theirScore: 0 },
+      { name: '後半', minutes: mins, ourTries: 0, ourGoals: 0, ourScore: 0, theirTries: 0, theirGoals: 0, theirScore: 0 }
+    ];
+  }
+  return [
+    { name: '本戦', minutes: mins, ourTries: 0, ourGoals: 0, ourScore: 0, theirTries: 0, theirGoals: 0, theirScore: 0 }
+  ];
+}
+
+function buildFormStateFromMatch(m, d) {
+  const periods = (d.periods || makePeriods(d.format || 'halves', 15));
+  return {
+    status: m.status || 'completed',
+    date: m.date,
+    ourTeam: m.ourTeam,
+    opponent: m.opponent,
+    opponentTeam: m.opponentTeam || '',
+    location: m.location || '',
+    type: m.type,
+    typeName: m.typeName || '',
+    format: d.format || 'halves',
+    squadSize: d.squadSize || 7,
+    minutes: periods[0]?.minutes || 15,
+    periods: JSON.parse(JSON.stringify(periods)),
+    lineup: JSON.parse(JSON.stringify(d.lineup || [])),
+    reserves: JSON.parse(JSON.stringify(d.reserves || [])),
+    tries: JSON.parse(JSON.stringify(m.tries || [])),
+    subs: JSON.parse(JSON.stringify(d.subs || [])),
+    photos: JSON.parse(JSON.stringify(d.photos || [])),
+    comment: m.comment || ''
+  };
+}
+
+// ===== フォーム反映 =====
+function applyFormState() {
+  document.querySelector(`input[name="f-status"][value="${formState.status}"]`).checked = true;
+  document.getElementById('f-date').value = formState.date;
+  document.getElementById('f-our-team').value = formState.ourTeam;
+  document.getElementById('f-opponent').value = formState.opponent;
+  document.getElementById('f-opp-team').value = formState.opponentTeam;
+  document.getElementById('f-location').value = formState.location;
+  document.querySelector(`input[name="f-type"][value="${formState.type}"]`).checked = true;
+  document.getElementById('f-type-name').value = formState.typeName;
+  document.querySelector(`input[name="f-format"][value="${formState.format}"]`).checked = true;
+  document.querySelector(`input[name="f-squad"][value="${formState.squadSize}"]`).checked = true;
+  document.getElementById('f-minutes').value = formState.minutes;
+  document.getElementById('f-comment').value = formState.comment;
+
+  ensureLineupShape();
+  renderScoreBlocks();
+  renderLineupInputs();
+  renderTriesInputs();
+  renderSubsInputs();
+  renderPhotosInputs();
+  updateFooter();
+}
+
+function ensureLineupShape() {
+  const positions = positionDefs[formState.squadSize] || [];
+  if (formState.lineup.length !== positions.length) {
+    formState.lineup = positions.map(p => {
+      const existing = formState.lineup.find(l => l.no === p.no);
+      return { no: p.no, pos: p.pos, player: existing?.player || '' };
+    });
+  }
+}
+
+// ===== タブ切替 =====
+function switchFormTab(paneId) {
+  document.querySelectorAll('.form-tab').forEach(t => t.classList.toggle('active', t.dataset.pane === paneId));
+  document.querySelectorAll('.form-pane').forEach(p => p.classList.toggle('active', p.id === paneId));
+}
+document.getElementById('form-tabs').addEventListener('click', e => {
+  if (e.target.classList.contains('form-tab')) switchFormTab(e.target.dataset.pane);
+});
+
+// ===== 試合情報の入力監視 =====
+['f-date','f-opponent','f-opp-team','f-location','f-type-name','f-comment'].forEach(id => {
+  document.addEventListener('input', e => {
+    if (e.target.id === id) {
+      const k = id.replace('f-', '').replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+      const map = { date: 'date', opponent: 'opponent', oppTeam: 'opponentTeam', location: 'location', typeName: 'typeName', comment: 'comment' };
+      const stateKey = map[k] || k;
+      if (formState) formState[stateKey] = e.target.value;
+      updateFooter();
+    }
+  });
+});
+document.getElementById('f-our-team').addEventListener('change', e => {
+  if (formState) { formState.ourTeam = e.target.value; renderScoreBlocks(); updateFooter(); }
+});
+document.querySelectorAll('input[name="f-type"]').forEach(r => r.addEventListener('change', e => {
+  if (formState && e.target.checked) formState.type = e.target.value;
+}));
+document.querySelectorAll('input[name="f-status"]').forEach(r => r.addEventListener('change', e => {
+  if (formState && e.target.checked) {
+    formState.status = e.target.value;
+    updateFooter();
+  }
+}));
+document.querySelectorAll('input[name="f-format"]').forEach(r => r.addEventListener('change', e => {
+  if (formState && e.target.checked) {
+    formState.format = e.target.value;
+    formState.periods = makePeriods(formState.format, formState.minutes);
+    renderScoreBlocks();
+  }
+}));
+document.querySelectorAll('input[name="f-squad"]').forEach(r => r.addEventListener('change', e => {
+  if (formState && e.target.checked) {
+    formState.squadSize = parseInt(e.target.value);
+    ensureLineupShape();
+    renderLineupInputs();
+  }
+}));
+document.getElementById('f-minutes').addEventListener('input', e => {
+  if (!formState) return;
+  formState.minutes = parseInt(e.target.value) || 15;
+  formState.periods.forEach(p => p.minutes = formState.minutes);
+  renderScoreBlocks();
+});
+
+// ===== スコアブロック =====
+function renderScoreBlocks() {
+  const wrap = document.getElementById('f-score-blocks');
+  wrap.innerHTML = formState.periods.map((p, idx) => `
+    <div class="score-input-block">
+      <div class="period-title">${p.name} <span class="period-mins">(${p.minutes}分)</span></div>
+      <div class="score-input-row">
+        <div class="side-input home">
+          <div class="side-name">🏠 田園 ${formState.ourTeam}</div>
+          <div class="stat-input-row">
+            <span class="stat-key">T</span>
+            <input type="number" min="0" value="${p.ourTries}" data-idx="${idx}" data-side="our" data-stat="Tries">
+            <span class="stat-key">G</span>
+            <input type="number" min="0" value="${p.ourGoals}" data-idx="${idx}" data-side="our" data-stat="Goals">
+            <input type="number" min="0" value="${p.ourScore}" class="score-final" data-idx="${idx}" data-side="our" data-stat="Score">
+          </div>
+        </div>
+        <div class="side-input">
+          <div class="side-name">✈️ 相手</div>
+          <div class="stat-input-row">
+            <span class="stat-key">T</span>
+            <input type="number" min="0" value="${p.theirTries}" data-idx="${idx}" data-side="their" data-stat="Tries">
+            <span class="stat-key">G</span>
+            <input type="number" min="0" value="${p.theirGoals}" data-idx="${idx}" data-side="their" data-stat="Goals">
+            <input type="number" min="0" value="${p.theirScore}" class="score-final" data-idx="${idx}" data-side="their" data-stat="Score">
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', onScoreInput);
+  });
+  updateScoreTotal();
+}
+function onScoreInput(e) {
+  const idx = +e.target.dataset.idx;
+  const side = e.target.dataset.side;
+  const stat = e.target.dataset.stat;
+  const val = Math.max(0, parseInt(e.target.value) || 0);
+  const p = formState.periods[idx];
+  p[side + stat] = val;
+  if (stat !== 'Score') {
+    // T/G変更時は得点を自動再計算
+    p[side + 'Score'] = (p[side + 'Tries'] || 0) * 5 + (p[side + 'Goals'] || 0) * 2;
+    const scoreInput = document.querySelector(`input[data-idx="${idx}"][data-side="${side}"][data-stat="Score"]`);
+    if (scoreInput) scoreInput.value = p[side + 'Score'];
+  }
+  updateScoreTotal();
+}
+function updateScoreTotal() {
+  const our = formState.periods.reduce((s, p) => s + (p.ourScore || 0), 0);
+  const their = formState.periods.reduce((s, p) => s + (p.theirScore || 0), 0);
+  document.getElementById('f-our-total').textContent = our;
+  document.getElementById('f-their-total').textContent = their;
+  const r = our > their ? '🎉 勝利' : our < their ? '😢 敗北' : '🤝 引き分け';
+  const c = our > their ? 'var(--win)' : our < their ? 'var(--lose)' : 'var(--draw)';
+  const t = document.getElementById('f-result-text');
+  t.textContent = our + their === 0 ? '' : r;
+  t.style.color = c;
+}
+
+// ===== メンバー =====
+function renderLineupInputs() {
+  const positions = positionDefs[formState.squadSize] || [];
+  const startersTbody = document.getElementById('f-starters');
+  startersTbody.innerHTML = positions.map((p, i) => {
+    const player = formState.lineup[i]?.player || '';
+    return `
+      <tr>
+        <td class="col-no">${p.no}</td>
+        <td class="col-pos">${p.pos}</td>
+        <td><input type="text" list="dl-players" value="${escapeHtml(player)}" data-idx="${i}" oninput="formState.lineup[${i}].player = this.value"></td>
+      </tr>
+    `;
+  }).join('');
+
+  const reservesTbody = document.getElementById('f-reserves');
+  if (formState.reserves.length === 0) {
+    reservesTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#9ca3af; padding:12px; font-size:12px;">リザーブを追加してください</td></tr>';
+  } else {
+    reservesTbody.innerHTML = formState.reserves.map((r, i) => `
+      <tr>
+        <td class="col-no">${r.no}</td>
+        <td><input type="text" list="dl-players" value="${escapeHtml(r.player)}" oninput="formState.reserves[${i}].player = this.value"></td>
+        <td class="col-action"><button class="row-del-btn" onclick="removeReserve(${i})">✕</button></td>
+      </tr>
+    `).join('');
+  }
+}
+function addReserve() {
+  const positions = positionDefs[formState.squadSize] || [];
+  const baseNo = positions.length;
+  const nextNo = baseNo + formState.reserves.length + 1;
+  formState.reserves.push({ no: nextNo, pos: 'リザーブ', player: '' });
+  renderLineupInputs();
+}
+function removeReserve(i) {
+  formState.reserves.splice(i, 1);
+  // 番号振り直し
+  const baseNo = (positionDefs[formState.squadSize] || []).length;
+  formState.reserves.forEach((r, idx) => r.no = baseNo + idx + 1);
+  renderLineupInputs();
+}
+
+// ===== トライ =====
+function renderTriesInputs() {
+  const wrap = document.getElementById('f-tries-list');
+  if (formState.tries.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center; color:#9ca3af; padding:16px; font-size:13px;">「＋選手を追加」からトライ者を登録</div>';
+  } else {
+    wrap.innerHTML = formState.tries.map((t, i) => `
+      <div class="try-input-row">
+        <input type="text" list="dl-players" value="${escapeHtml(t.p)}" placeholder="選手名" oninput="formState.tries[${i}].p = this.value; updateTriesTotal()">
+        <button class="counter-btn" onclick="changeTryCount(${i}, -1)">−</button>
+        <span class="counter-display">${t.n}T</span>
+        <button class="counter-btn" onclick="changeTryCount(${i}, +1)">＋</button>
+        <button class="row-del-btn" onclick="removeTryRow(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+  updateTriesTotal();
+}
+function addTryRow() {
+  formState.tries.push({ p: '', n: 1 });
+  renderTriesInputs();
+}
+function removeTryRow(i) {
+  formState.tries.splice(i, 1);
+  renderTriesInputs();
+}
+function changeTryCount(i, delta) {
+  formState.tries[i].n = Math.max(0, formState.tries[i].n + delta);
+  renderTriesInputs();
+}
+function updateTriesTotal() {
+  const total = formState.tries.reduce((s, t) => s + (t.n || 0), 0);
+  document.getElementById('f-tries-total').textContent = total;
+}
+
+// ===== 写真 =====
+function renderPhotosInputs() {
+  const wrap = document.getElementById('f-photo-thumbs');
+  const counter = document.getElementById('f-photo-counter');
+  const count = formState.photos.length;
+  counter.textContent = `${count} / 20 枚`;
+  counter.classList.toggle('warn', count >= 20);
+  if (count === 0) {
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.innerHTML = formState.photos.map((p, i) => `
+    <div class="photo-thumb">
+      <img src="${p.dataUrl}" alt="">
+      <button class="photo-del" onclick="removePhoto(${i})" title="削除">✕</button>
+    </div>
+  `).join('');
+}
+function removePhoto(idx) {
+  formState.photos.splice(idx, 1);
+  renderPhotosInputs();
+  updateFooter();
+}
+async function handlePhotoFiles(fileList) {
+  const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  let added = 0, skipped = 0;
+  for (const file of files) {
+    if (formState.photos.length >= 20) { skipped++; continue; }
+    try {
+      const dataUrl = await compressImage(file, 1280, 0.82);
+      formState.photos.push({ id: 'ph' + Date.now() + '_' + Math.random().toString(36).slice(2,6), dataUrl });
+      added++;
+    } catch (e) { console.warn('画像読み込みエラー:', e); }
+  }
+  renderPhotosInputs();
+  updateFooter();
+  if (added) toast(`${added}枚追加${skipped ? `（${skipped}枚は20枚上限のためスキップ）` : ''}`);
+  else if (skipped) toast(`既に20枚に達しています`, 'error');
+}
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+// 写真入力ハンドラ
+document.addEventListener('change', e => {
+  if (e.target.id === 'f-photo-input' && e.target.files.length) {
+    handlePhotoFiles(e.target.files);
+    e.target.value = ''; // 同じファイル再選択可能に
+  }
+});
+// ドラッグ&ドロップ対応
+document.addEventListener('DOMContentLoaded', () => {
+  const area = document.querySelector('.photo-input-area');
+  if (!area) return;
+  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; }));
+  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.style.borderColor = ''; }));
+  area.addEventListener('drop', e => { if (e.dataTransfer.files.length) handlePhotoFiles(e.dataTransfer.files); });
+});
+
+// ===== 写真ライトボックス =====
+let lbPhotoList = [];
+let lbPhotoIdx = 0;
+function openPhotoLightbox(photos, idx) {
+  lbPhotoList = photos;
+  lbPhotoIdx = idx;
+  renderPhotoLightbox();
+  document.getElementById('photo-lightbox').classList.add('active');
+}
+function closePhotoLightbox() {
+  document.getElementById('photo-lightbox').classList.remove('active');
+}
+function navPhoto(dir) {
+  const total = lbPhotoList.length;
+  if (!total) return;
+  lbPhotoIdx = (lbPhotoIdx + dir + total) % total;
+  renderPhotoLightbox();
+}
+function renderPhotoLightbox() {
+  const p = lbPhotoList[lbPhotoIdx];
+  if (!p) return;
+  document.getElementById('lb-photo-img').src = p.dataUrl;
+  document.getElementById('lb-photo-counter').textContent = `${lbPhotoIdx + 1} / ${lbPhotoList.length}`;
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('photo-lightbox').classList.contains('active')) return;
+  if (e.key === 'Escape') closePhotoLightbox();
+  else if (e.key === 'ArrowLeft') navPhoto(-1);
+  else if (e.key === 'ArrowRight') navPhoto(1);
+});
+
+// ===== 交代 =====
+function renderSubsInputs() {
+  const wrap = document.getElementById('f-subs-list');
+  if (formState.subs.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center; color:#9ca3af; padding:16px; font-size:13px;">「＋交代を追加」から交代を登録</div>';
+    return;
+  }
+  wrap.innerHTML = formState.subs.map((s, i) => `
+    <div class="sub-input-card">
+      <button class="row-del-btn" onclick="removeSubRow(${i})">✕</button>
+      <div class="sub-grid">
+        <div>
+          <label>時間</label>
+          <input type="text" class="form-control" value="${escapeHtml(s.time || '')}" placeholder="例: 後半 5分" oninput="formState.subs[${i}].time = this.value">
+        </div>
+        <div>
+          <label>ピリオド</label>
+          <select class="form-control" onchange="formState.subs[${i}].period = this.value">
+            ${formState.periods.map(p => `<option value="${p.name}" ${s.period === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>OUT（交代される選手）</label>
+          <input type="text" class="form-control" list="dl-players" value="${escapeHtml(s.out || '')}" oninput="formState.subs[${i}].out = this.value">
+        </div>
+        <div>
+          <label>IN（投入する選手）</label>
+          <input type="text" class="form-control" list="dl-players" value="${escapeHtml(s.in || '')}" oninput="formState.subs[${i}].in = this.value">
+        </div>
+        <div>
+          <label>背番号 / ポジション</label>
+          <input type="text" class="form-control" value="${escapeHtml((s.no ? '#' + s.no + ' ' : '') + (s.pos || ''))}" placeholder="例: #1 OPR" oninput="parseSubPos(${i}, this.value)">
+        </div>
+        <div>
+          <label>理由</label>
+          <input type="text" class="form-control" value="${escapeHtml(s.reason || '')}" placeholder="例: 戦術交代 / 怪我" oninput="formState.subs[${i}].reason = this.value">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function parseSubPos(i, val) {
+  const m = val.match(/^#?(\d+)?\s*(.+)?$/);
+  formState.subs[i].no = m && m[1] ? parseInt(m[1]) : null;
+  formState.subs[i].pos = m && m[2] ? m[2].trim() : '';
+}
+function addSubRow() {
+  formState.subs.push({ time: '', period: formState.periods[0]?.name || '前半', out: '', in: '', no: null, pos: '', reason: '' });
+  renderSubsInputs();
+}
+function removeSubRow(i) {
+  formState.subs.splice(i, 1);
+  renderSubsInputs();
+}
+
+// ===== テンプレート =====
+function refreshTemplateSelect() {
+  const sel = document.getElementById('f-template-select');
+  const templates = lsLoad(LS_KEYS.templates, []);
+  sel.innerHTML = '<option value="">-- テンプレートを選択 --</option>' +
+    templates.map((t, i) => `<option value="${i}">${escapeHtml(t.name)}</option>`).join('');
+}
+function saveAsTemplate() {
+  const name = prompt('テンプレート名を入力（例: U12-A 春シーズン）');
+  if (!name) return;
+  const templates = lsLoad(LS_KEYS.templates, []);
+  templates.push({
+    name,
+    squadSize: formState.squadSize,
+    lineup: JSON.parse(JSON.stringify(formState.lineup)),
+    reserves: JSON.parse(JSON.stringify(formState.reserves))
+  });
+  lsSave(LS_KEYS.templates, templates);
+  refreshTemplateSelect();
+  toast('テンプレートを保存しました');
+}
+function loadTemplate() {
+  const idx = document.getElementById('f-template-select').value;
+  if (idx === '') return;
+  const templates = lsLoad(LS_KEYS.templates, []);
+  const t = templates[idx];
+  if (!t) return;
+  formState.squadSize = t.squadSize;
+  document.querySelector(`input[name="f-squad"][value="${t.squadSize}"]`).checked = true;
+  formState.lineup = JSON.parse(JSON.stringify(t.lineup));
+  formState.reserves = JSON.parse(JSON.stringify(t.reserves));
+  renderLineupInputs();
+  toast('テンプレートを読み込みました');
+}
+function deleteTemplate() {
+  const idx = document.getElementById('f-template-select').value;
+  if (idx === '') return;
+  if (!confirm('このテンプレートを削除しますか？')) return;
+  const templates = lsLoad(LS_KEYS.templates, []);
+  templates.splice(idx, 1);
+  lsSave(LS_KEYS.templates, templates);
+  refreshTemplateSelect();
+  toast('テンプレートを削除しました');
+}
+
+// ===== 試合保存 =====
+function saveMatch() {
+  // 必須チェック（予定試合の場合はscoreなどは不要）
+  const errors = [];
+  if (!formState.date) errors.push('日付');
+  if (!formState.ourTeam) errors.push('田園のチーム');
+  if (!formState.opponent.trim()) errors.push('対戦相手');
+  if (!formState.type) errors.push('試合種別');
+  if (errors.length) { toast('未入力: ' + errors.join('・'), 'error'); switchFormTab('form-info'); return; }
+
+  // ID生成 or 既存ID
+  const id = formState.editingId || ('u' + Date.now());
+  const year = inferYear(formState.date);
+  const ourScore = formState.periods.reduce((s, p) => s + (p.ourScore || 0), 0);
+  const theirScore = formState.periods.reduce((s, p) => s + (p.theirScore || 0), 0);
+
+  const match = {
+    id, year,
+    status: formState.status,
+    userSaved: true, // ユーザーが保存した試合マーク（一覧で「保存済」表示）
+    date: formState.date,
+    ourTeam: formState.ourTeam,
+    opponent: formState.opponent.trim(),
+    opponentTeam: formState.opponentTeam.trim(),
+    location: formState.location.trim(),
+    type: formState.type,
+    typeName: formState.typeName.trim() || (formState.type === 'tournament' ? '大会' : formState.type === 'official' ? '公式戦' : '交流戦'),
+    ourScore, theirScore,
+    tries: formState.tries.filter(t => t.p && t.n > 0),
+    comment: formState.comment.trim()
+  };
+
+  const detail = {
+    format: formState.format,
+    squadSize: formState.squadSize,
+    periods: formState.periods,
+    lineup: formState.lineup.filter(p => p.player),
+    reserves: formState.reserves.filter(r => r.player),
+    subs: formState.subs.filter(s => s.in || s.out),
+    photos: formState.photos
+  };
+  if (formState.format === 'single') detail.totalMinutes = formState.minutes;
+
+  // 既存試合の更新 or 新規追加
+  const existingIdx = matches.findIndex(m => m.id === id);
+  if (existingIdx >= 0) matches[existingIdx] = match;
+  else matches.push(match);
+  matchDetails[id] = detail;
+
+  // localStorage 保存（ユーザー追加分のみ）
+  try {
+    saveToLocalStorage();
+  } catch (e) {
+    toast('保存容量を超過しました。古い写真を整理してください', 'error');
+    return;
+  }
+
+  toast(formState.status === 'scheduled' ? '試合予定を保存しました 📅' : '試合記録を保存しました 🏉');
+  closeForm();
+  renderAll();
+  refreshDatalists();
+}
+
+function updateFooter() {
+  if (!formState) return;
+  const info = document.getElementById('form-footer-info');
+  const filled = [];
+  if (formState.status === 'scheduled') filled.push('📅予定');
+  if (formState.date) filled.push('日付');
+  if (formState.opponent) filled.push('対戦相手');
+  if (formState.lineup.some(p => p.player)) filled.push(`メンバー ${formState.lineup.filter(p => p.player).length}人`);
+  if (formState.tries.some(t => t.p && t.n)) filled.push(`トライ ${formState.tries.reduce((s,t) => s + (t.n||0), 0)}本`);
+  if (formState.photos.length) filled.push(`写真 ${formState.photos.length}枚`);
+  info.textContent = filled.length
+    ? '入力済み: ' + filled.join(' / ')
+    : '日付・対戦相手・試合種別が必須項目です';
+}
+
+function inferYear(dateStr) {
+  // 4-3月の年度として計算（4月以降は当年、1-3月は前年）
+  const d = new Date(dateStr);
+  return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+}
+
+function saveToLocalStorage() {
+  // userSaved フラグを持つ試合をすべて保存
+  const userMatches = matches.filter(m => m.userSaved);
+  const userDetails = {};
+  userMatches.forEach(m => { if (matchDetails[m.id]) userDetails[m.id] = matchDetails[m.id]; });
+  lsSave(LS_KEYS.matches, userMatches);
+  lsSave(LS_KEYS.details, userDetails);
+}
+
+// ===== 年度タブ更新（新規データに対応） =====
+function refreshYearTabs() {
+  const years = [...new Set(matches.map(m => m.year))].sort();
+  const tabs = document.getElementById('year-tabs');
+  const current = state.year;
+  tabs.innerHTML = '<button class="year-tab" data-year="all">全期間</button>' +
+    years.map(y => `<button class="year-tab" data-year="${y}">${y}年度</button>`).join('');
+  tabs.querySelectorAll('.year-tab').forEach(b => b.classList.toggle('active', b.dataset.year === current));
+}
+
+// ===== CSV出力 =====
+function exportCSV() {
+  if (!matches.length) { toast('データがありません', 'error'); return; }
+  const cols = ['日付','年度','田園のチーム','対戦相手','相手チーム','場所','試合種別','試合名','田園得点','相手得点','結果','試合形式','人数制','コメント','トライ詳細'];
+  const rows = matches.slice().sort((a,b) => a.date.localeCompare(b.date)).map(m => {
+    const d = matchDetails[m.id] || {};
+    const r = m.ourScore > m.theirScore ? '勝' : m.ourScore < m.theirScore ? '敗' : '分';
+    const fmt = d.format === 'single' ? '1本勝負' : d.format === 'halves' ? '前後半' : '';
+    const tries = (m.tries || []).map(t => `${t.p}(${t.n}T)`).join(' / ');
+    return [
+      m.date, m.year, m.ourTeam, m.opponent, m.opponentTeam || '', m.location || '',
+      m.typeName || '', m.typeName || '',
+      m.ourScore, m.theirScore, r,
+      fmt, d.squadSize ? d.squadSize + '人制' : '',
+      (m.comment || '').replace(/\n/g, ' '),
+      tries
+    ];
+  });
+  const csv = [cols, ...rows].map(r => r.map(cell => {
+    const s = String(cell ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\r\n');
+  // BOM付きでExcel互換
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `denenrs_matches_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSVを出力しました 📥');
+}
+
+// ===== 試合カードクリックで編集も可能に =====
+// （詳細モーダル内に「編集」ボタンを追加してもよいが、ここでは長押し未実装）
+
+// ===== ユーティリティ =====
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+document.getElementById('form-modal').addEventListener('click', closeForm);
+
+// ============================================================
+// ===== マスタ管理（チーム / 選手） =====
+// ============================================================
+
+function openMaster() {
+  renderMasterTeams();
+  renderMasterPlayers();
+  switchMasterTab('master-teams');
+  document.getElementById('master-modal').classList.add('active');
+}
+function closeMaster() {
+  document.getElementById('master-modal').classList.remove('active');
+}
+function switchMasterTab(paneId) {
+  document.querySelectorAll('#master-modal .form-tab').forEach(t => t.classList.toggle('active', t.dataset.masterPane === paneId));
+  document.querySelectorAll('#master-modal .form-pane').forEach(p => p.classList.toggle('active', p.id === paneId));
+}
+document.getElementById('master-modal').addEventListener('click', closeMaster);
+
+// ===== チーム ==========
+function teamUsageCount(name) {
+  return matches.filter(m => m.ourTeam === name).length;
+}
+function renderMasterTeams() {
+  const list = document.getElementById('teams-list');
+  document.getElementById('teams-count').textContent = teams.length + ' チーム';
+  if (!teams.length) {
+    list.innerHTML = '<div class="master-empty">チームを追加してください</div>';
+    return;
+  }
+  list.innerHTML = teams.map((t, i) => {
+    const usage = teamUsageCount(t);
+    const usageBadge = usage > 0
+      ? `<span class="usage warn">${usage}件で使用中</span>`
+      : `<span class="usage">未使用</span>`;
+    return `
+      <div class="master-row">
+        <input type="text" value="${escapeHtml(t)}" data-team-idx="${i}" onchange="renameTeam(${i}, this.value)">
+        ${usageBadge}
+        <button class="row-del-btn" title="削除" onclick="deleteTeam(${i})">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+function addTeam() {
+  const input = document.getElementById('new-team-input');
+  const name = input.value.trim();
+  if (!name) return;
+  if (teams.includes(name)) { toast('同名のチームが既に存在します', 'error'); return; }
+  teams.push(name);
+  lsSave(LS_KEYS.teams, teams);
+  input.value = '';
+  renderMasterTeams();
+  refreshAllAfterMasterChange();
+  toast('チームを追加しました');
+}
+function renameTeam(idx, newName) {
+  newName = newName.trim();
+  const oldName = teams[idx];
+  if (!newName) { renderMasterTeams(); return; }
+  if (newName === oldName) return;
+  if (teams.some((t, i) => i !== idx && t === newName)) {
+    toast('同名のチームが既に存在します', 'error');
+    renderMasterTeams();
+    return;
+  }
+  teams[idx] = newName;
+  lsSave(LS_KEYS.teams, teams);
+  refreshAllAfterMasterChange();
+  toast(`「${oldName}」→「${newName}」に変更（既存試合は手動で更新が必要です）`);
+}
+function deleteTeam(idx) {
+  const name = teams[idx];
+  const usage = teamUsageCount(name);
+  if (usage > 0) {
+    if (!confirm(`「${name}」は ${usage}件 の試合で使われています。削除しても試合データは残りますが、フィルタやテンプレートから消えます。続行しますか？`)) return;
+  } else {
+    if (!confirm(`「${name}」を削除しますか？`)) return;
+  }
+  teams.splice(idx, 1);
+  lsSave(LS_KEYS.teams, teams);
+  renderMasterTeams();
+  refreshAllAfterMasterChange();
+  toast('チームを削除しました');
+}
+
+// ===== 選手 ==========
+function playerUsageCount(name) {
+  let count = 0;
+  matches.forEach(m => {
+    if ((m.tries || []).some(t => t.p === name)) count++;
+  });
+  Object.values(matchDetails).forEach(d => {
+    if ([...(d.lineup || []), ...(d.reserves || [])].some(p => p.player === name)) count++;
+  });
+  return count;
+}
+function renderMasterPlayers() {
+  const list = document.getElementById('players-list');
+  document.getElementById('players-count').textContent = playersMaster.length + ' 名';
+  if (!playersMaster.length) {
+    list.innerHTML = '<div class="master-empty">選手を追加してください<br><span style="font-size:11px;">「📥 既存試合から取込」で過去データから一括登録もできます</span></div>';
+    return;
+  }
+  list.innerHTML = playersMaster.map((p, i) => {
+    const usage = playerUsageCount(p);
+    const usageBadge = usage > 0
+      ? `<span class="usage">${usage}試合に登場</span>`
+      : `<span class="usage" style="background:#f3f4f6;">未使用</span>`;
+    return `
+      <div class="master-row">
+        <input type="text" value="${escapeHtml(p)}" onchange="renamePlayer(${i}, this.value)">
+        ${usageBadge}
+        <button class="row-del-btn" title="削除" onclick="deletePlayer(${i})">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+function addPlayer() {
+  const input = document.getElementById('new-player-input');
+  const name = input.value.trim();
+  if (!name) return;
+  if (playersMaster.includes(name)) { toast('同名の選手が既に存在します', 'error'); return; }
+  playersMaster.push(name);
+  playersMaster.sort();
+  lsSave(LS_KEYS.players, playersMaster);
+  input.value = '';
+  renderMasterPlayers();
+  refreshDatalists();
+  toast('選手を追加しました');
+}
+function renamePlayer(idx, newName) {
+  newName = newName.trim();
+  if (!newName) { renderMasterPlayers(); return; }
+  const oldName = playersMaster[idx];
+  if (newName === oldName) return;
+  if (playersMaster.some((p, i) => i !== idx && p === newName)) {
+    toast('同名の選手が既に存在します', 'error');
+    renderMasterPlayers();
+    return;
+  }
+  playersMaster[idx] = newName;
+  playersMaster.sort();
+  lsSave(LS_KEYS.players, playersMaster);
+  renderMasterPlayers();
+  refreshDatalists();
+  toast(`「${oldName}」→「${newName}」に変更（既存試合は手動で更新が必要です）`);
+}
+function deletePlayer(idx) {
+  const name = playersMaster[idx];
+  if (!confirm(`「${name}」を削除しますか？\n\n（既存試合に残っているこの選手の記録は消えません）`)) return;
+  playersMaster.splice(idx, 1);
+  lsSave(LS_KEYS.players, playersMaster);
+  renderMasterPlayers();
+  refreshDatalists();
+  toast('選手を削除しました');
+}
+function importPlayersFromMatches() {
+  const c = collectCandidates();
+  const before = playersMaster.length;
+  c.players.forEach(p => {
+    if (!playersMaster.includes(p)) playersMaster.push(p);
+  });
+  playersMaster.sort();
+  lsSave(LS_KEYS.players, playersMaster);
+  renderMasterPlayers();
+  refreshDatalists();
+  toast(`${playersMaster.length - before}名を取り込みました`);
+}
+
+// マスタ変更後にUIを再描画
+function refreshAllAfterMasterChange() {
+  buildTeamFilter();
+  refreshDatalists();
+  renderAll();
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+loadStoredData();
+refreshYearTabs();
+buildTeamFilter();
+renderAll();
+</script>
+
+</body>
+</html>
